@@ -17,13 +17,17 @@ import { DashboardOverview } from "./components/DashboardOverview";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { UserDashboard } from "./components/UserDashboard";
 import { MyEventsPanel } from "./components/MyEventsPanel";
+import { TasksPanel } from "./components/TasksPanel";
+import { DepartmentsPanel } from "./components/DepartmentsPanel";
+import { CreateTaskModal } from "./components/CreateTaskModal";
 import { LanguageToggle } from "./components/LanguageToggle";
 import { DarkModeToggle } from "./components/DarkModeToggle";
 import { getTranslation, type Language } from "./lib/i18n";
 import { Event, getEvents, addEvent as saveEvent, updateEvent as saveUpdateEvent, deleteEvent as saveDeleteEvent, initializeDefaultData } from "./lib/storage";
+import { initializeDepartmentsData } from "./lib/departments";
 
 type UserRole = 'admin' | 'member' | 'user';
-type DashboardView = 'overview' | 'events' | 'analytics' | 'profile' | 'gamification' | 'members' | 'settings' | 'browse' | 'myevents';
+type DashboardView = 'overview' | 'events' | 'analytics' | 'profile' | 'gamification' | 'members' | 'settings' | 'browse' | 'myevents' | 'tasks' | 'departments';
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -35,6 +39,7 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [dashboardView, setDashboardView] = useState<DashboardView>('overview');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showCreateTask, setShowCreateTask] = useState(false);
   
   // Load events from storage
   const [events, setEvents] = useState<Event[]>([]);
@@ -42,6 +47,7 @@ export default function App() {
   // Initialize data and load events
   useEffect(() => {
     initializeDefaultData();
+    initializeDepartmentsData();
     loadEvents();
   }, [refreshKey]);
 
@@ -224,6 +230,12 @@ export default function App() {
             {dashboardView === 'gamification' && (
               <GamificationDashboard {...gamificationData} />
             )}
+            {dashboardView === 'tasks' && (
+              <TasksPanel userEmail={userEmail} userRole={userRole} onCreateTask={() => setShowCreateTask(true)} />
+            )}
+            {dashboardView === 'departments' && (
+              <DepartmentsPanel />
+            )}
           </>
         )}
 
@@ -256,7 +268,22 @@ export default function App() {
             {dashboardView === 'myevents' && (
               <MyEventsPanel userEmail={userEmail} />
             )}
+            {dashboardView === 'tasks' && (
+              <TasksPanel userEmail={userEmail} userRole={userRole} onCreateTask={() => setShowCreateTask(true)} />
+            )}
+            {dashboardView === 'departments' && (
+              <DepartmentsPanel />
+            )}
           </>
+        )}
+
+        {/* Create Task Modal */}
+        {showCreateTask && (
+          <CreateTaskModal
+            isOpen={showCreateTask}
+            onClose={() => setShowCreateTask(false)}
+            createdBy={userEmail}
+          />
         )}
       </PanelLayout>
     );

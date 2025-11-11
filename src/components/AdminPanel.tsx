@@ -12,24 +12,14 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Label } from "./ui/label";
-
-interface Event {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  attendees: number;
-  image: string;
-  status: string;
-  color: string;
-  description: string;
-}
+import { RegistrationMethodSelector } from "./RegistrationMethodSelector";
+import { RegistrationConfig, internalRegistration } from "../lib/registration-methods";
+import { Event } from "../lib/storage";
 
 interface AdminPanelProps {
   events: Event[];
-  onAddEvent: (event: Omit<Event, 'id'>) => void;
-  onEditEvent: (id: string, event: Omit<Event, 'id'>) => void;
+  onAddEvent: (event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => void;
+  onEditEvent: (id: string, event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => void;
   onDeleteEvent: (id: string) => void;
   isAdmin: boolean;
 }
@@ -42,11 +32,16 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     date: "",
     time: "",
     location: "",
-    attendees: "",
+    capacity: "50",
     image: "",
     status: "قريباً",
     color: "#4285f4",
-    description: ""
+    description: "",
+    tags: [] as string[],
+    isOnline: false,
+    meetingLink: "",
+    requirements: "",
+    registrationMethod: internalRegistration as RegistrationConfig
   });
 
   const colors = [
@@ -61,7 +56,7 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     
     const eventData = {
       ...formData,
-      attendees: parseInt(formData.attendees) || 0
+      capacity: parseInt(formData.capacity) || 0
     };
 
     if (editingEvent) {
@@ -76,11 +71,16 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
       date: "",
       time: "",
       location: "",
-      attendees: "",
+      capacity: "50",
       image: "",
       status: "قريباً",
       color: "#4285f4",
-      description: ""
+      description: "",
+      tags: [] as string[],
+      isOnline: false,
+      meetingLink: "",
+      requirements: "",
+      registrationMethod: internalRegistration as RegistrationConfig
     });
     setEditingEvent(null);
     setIsDialogOpen(false);
@@ -93,11 +93,16 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
       date: event.date,
       time: event.time,
       location: event.location,
-      attendees: event.attendees.toString(),
+      capacity: event.capacity.toString(),
       image: event.image,
       status: event.status,
       color: event.color,
-      description: event.description || ""
+      description: event.description || "",
+      tags: event.tags || [] as string[],
+      isOnline: event.isOnline || false,
+      meetingLink: event.meetingLink || "",
+      requirements: event.requirements || "",
+      registrationMethod: event.registrationMethod || internalRegistration as RegistrationConfig
     });
     setIsDialogOpen(true);
   };
@@ -114,11 +119,16 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
       date: "",
       time: "",
       location: "",
-      attendees: "",
+      capacity: "50",
       image: "",
       status: "قريباً",
       color: "#4285f4",
-      description: ""
+      description: "",
+      tags: [] as string[],
+      isOnline: false,
+      meetingLink: "",
+      requirements: "",
+      registrationMethod: internalRegistration as RegistrationConfig
     });
     setEditingEvent(null);
   };
@@ -195,12 +205,12 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
               </div>
 
               <div>
-                <Label htmlFor="attendees">الحضور المتوقع</Label>
+                <Label htmlFor="capacity">السعة المتاحة</Label>
                 <Input
-                  id="attendees"
+                  id="capacity"
                   type="number"
-                  value={formData.attendees}
-                  onChange={(e) => setFormData({ ...formData, attendees: e.target.value })}
+                  value={formData.capacity}
+                  onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
                   placeholder="100"
                   required
                 />
@@ -260,6 +270,14 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                     ))}
                   </select>
                 </div>
+              </div>
+
+              {/* قسم طريقة التسجيل */}
+              <div className="border-t pt-4">
+                <RegistrationMethodSelector
+                  value={formData.registrationMethod}
+                  onChange={(config) => setFormData({ ...formData, registrationMethod: config })}
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
@@ -323,7 +341,7 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                         </div>
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4" style={{ color: event.color }} />
-                          <span>{event.attendees} متوقع حضورهم</span>
+                          <span>{event.capacity} مقعد متاح</span>
                         </div>
                       </div>
                     </div>

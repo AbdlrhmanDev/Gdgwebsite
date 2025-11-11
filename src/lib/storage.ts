@@ -1,6 +1,8 @@
 // نظام تخزين البيانات باستخدام localStorage
 // في الإنتاج، يمكن استبداله بقاعدة بيانات حقيقية (Supabase, Firebase, etc.)
 
+import { RegistrationConfig } from './registration-methods';
+
 export interface Event {
   id: string;
   title: string;
@@ -19,6 +21,7 @@ export interface Event {
   isOnline: boolean;
   meetingLink?: string;
   requirements?: string;
+  registrationMethod?: RegistrationConfig; // طريقة التسجيل
 }
 
 export interface EventRegistration {

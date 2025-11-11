@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { X, Calendar, Clock, MapPin, Users, Tag, Monitor, CheckCircle, AlertCircle } from "lucide-react";
+import { X, Calendar, Clock, MapPin, Users, Tag, Monitor, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Event, EventRegistration, addRegistration, generateQRCode, isUserRegistered, getEventById, updateEvent, getEventRegistrations } from "../lib/storage";
+import { getRegistrationUrl, getRegistrationButtonText, getRegistrationMethodIcon } from "../lib/registration-methods";
 
 interface EventDetailsModalProps {
   event: Event;
@@ -24,12 +25,27 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
   const isFull = currentRegistrations >= event.capacity;
   const canRegister = userRole !== 'user' && !alreadyRegistered && !isFull;
 
+  // تحديد طريقة التسجيل
+  const registrationMethod = event.registrationMethod?.method || 'internal';
+  const isExternalRegistration = ['google-form', 'typeform', 'microsoft-form', 'external-link', 'email'].includes(registrationMethod);
+
   const handleRegister = async () => {
     if (userRole === 'user') {
       alert('يجب أن تكون عضواً للتسجيل في الفعاليات. يرجى إنشاء حساب عضو.');
       return;
     }
 
+    // إذا كان التسجيل خارجي، افتح الرابط
+    if (isExternalRegistration && event.registrationMethod) {
+      const url = getRegistrationUrl(event.registrationMethod, event.id, userEmail);
+      window.open(url, '_blank');
+      
+      // إظهار رسالة توجيه
+      alert('سيتم فتح نموذج التسجيل في نافذة جديدة. يرجى ملء البيانات المطلوبة.');
+      return;
+    }
+
+    // التسجيل الداخلي
     setIsRegistering(true);
 
     // Simulate API call
@@ -183,6 +199,40 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
                         {tag}
                       </Badge>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Registration Method Info */}
+              {event.registrationMethod && registrationMethod !== 'internal' && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">{getRegistrationMethodIcon(registrationMethod)}</div>
+                    <div className="flex-1">
+                      <p className="font-medium text-blue-800 mb-1">
+                        طريقة التسجيل: {getRegistrationButtonText(registrationMethod, 'ar')}
+                      </p>
+                      <p className="text-sm text-blue-700 mb-3">
+                        {registrationMethod === 'google-form' && 'سيتم فتح نموذج Google Forms في نافذة جديدة'}
+                        {registrationMethod === 'typeform' && 'سيتم فتح نموذج Typeform التفاعلي'}
+                        {registrationMethod === 'external-link' && 'سيتم توجيهك لصفحة التسجيل الخارجية'}
+                        {registrationMethod === 'email' && 'سيتم فتح برنامج البريد الإلكتروني لإرسال طلب التسجيل'}
+                      </p>
+                      {event.registrationMethod.url && (
+                        <div className="flex items-center gap-2">
+                          <code className="text-xs px-2 py-1 bg-white rounded border flex-1 truncate" dir="ltr">
+                            {event.registrationMethod.url}
+                          </code>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(event.registrationMethod?.url, '_blank')}
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

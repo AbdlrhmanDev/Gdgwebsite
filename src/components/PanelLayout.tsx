@@ -1,4 +1,4 @@
-import { LogOut, Home, Calendar, BarChart, Settings, Users as UsersIcon, Trophy, User, LayoutDashboard, Eye } from "lucide-react";
+import { LogOut, Home, Calendar, BarChart, Settings, Users as UsersIcon, Trophy, User, LayoutDashboard, Eye, CheckSquare, Briefcase } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
@@ -43,7 +43,9 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
     if (userRole === 'member') {
       return [
         ...baseItems,
+        { id: 'tasks', label: 'مهامي', icon: CheckSquare },
         { id: 'events', label: 'فعالياتي', icon: Calendar },
+        { id: 'departments', label: 'قسمي', icon: Briefcase },
         { id: 'profile', label: 'الملف الشخصي', icon: User },
         { id: 'gamification', label: 'النقاط والإنجازات', icon: Trophy }
       ];
@@ -52,7 +54,9 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
     // Admin gets everything
     return [
       ...baseItems,
+      { id: 'tasks', label: 'المهام', icon: CheckSquare },
       { id: 'events', label: 'إدارة الفعاليات', icon: Calendar },
+      { id: 'departments', label: 'الأقسام والفرق', icon: Briefcase },
       { id: 'profile', label: 'الملف الشخصي', icon: User },
       { id: 'gamification', label: 'النقاط والإنجازات', icon: Trophy },
       { id: 'analytics', label: 'التحليلات', icon: BarChart },
