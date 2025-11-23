@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Badge = require('../models/Badge');
+const bcrypt = require('bcryptjs');
 
 // @desc    Create new user
 // @route   POST /api/users
@@ -133,7 +134,11 @@ exports.updateUser = async (req, res) => {
     if (req.user.role === 'admin') {
       if (email) updateData.email = email;
       if (role) updateData.role = role;
-      if (password) updateData.password = password;
+      if (password) {
+        // Hash the password before saving
+        const salt = await bcrypt.genSalt(10);
+        updateData.password = await bcrypt.hash(password, salt);
+      }
     }
     
     const user = await User.findByIdAndUpdate(
