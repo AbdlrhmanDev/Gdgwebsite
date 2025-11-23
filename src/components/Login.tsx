@@ -26,13 +26,6 @@ export function Login({ onLogin, onRegister }: LoginProps) {
     }
   };
 
-  // Demo credentials info
-  const demoCredentials = [
-    { role: "مدير", email: "admin@gdg.com", password: "admin123", color: "#34a853" },
-    { role: "عضو", email: "member@gdg.com", password: "member123", color: "#4285f4" },
-    { role: "مستخدم", email: "user@gdg.com", password: "user123", color: "#9e9e9e" },
-  ];
-
   return (
     <div className="min-h-screen w-full bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Effects */}
@@ -131,33 +124,6 @@ export function Login({ onLogin, onRegister }: LoginProps) {
                 >
                   إنشاء حساب جديد
                 </button>
-              </p>
-            </div>
-
-            {/* Demo Credentials */}
-            <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
-              <div className="flex items-center gap-2 text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">
-                <Lock className="w-3 h-3" />
-                بيانات تجريبية
-              </div>
-              <div className="grid gap-1.5 text-xs font-mono">
-                {demoCredentials.map((cred, idx) => (
-                  <div 
-                    key={idx}
-                    className="flex justify-between items-center p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-                    onClick={() => {
-                      setEmail(cred.email);
-                      setPassword(cred.password);
-                    }}
-                    title="انقر للتعبئة التلقائية"
-                  >
-                    <span className="font-medium" style={{ color: cred.color }}>{cred.role}:</span>
-                    <span className="text-gray-400">{cred.email}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-600 text-center mt-2">
-                انقر على أي حساب للتعبئة التلقائية
               </p>
             </div>
           </CardContent>
