@@ -110,7 +110,7 @@ exports.getUser = async (req, res) => {
 // @access  Private
 exports.updateUser = async (req, res) => {
   try {
-    const { name, phone, bio, avatar, socialLinks } = req.body;
+    const { name, email, password, role, phone, bio, avatar, socialLinks, department } = req.body;
     
     // Check if user is updating their own profile or is admin
     if (req.params.id !== req.user.id && req.user.role !== 'admin') {
@@ -119,10 +119,26 @@ exports.updateUser = async (req, res) => {
         message: 'Not authorized to update this profile'
       });
     }
+
+    // Build update object
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (phone) updateData.phone = phone;
+    if (bio) updateData.bio = bio;
+    if (avatar) updateData.avatar = avatar;
+    if (socialLinks) updateData.socialLinks = socialLinks;
+    if (department) updateData.department = department;
+    
+    // Admin-only fields
+    if (req.user.role === 'admin') {
+      if (email) updateData.email = email;
+      if (role) updateData.role = role;
+      if (password) updateData.password = password;
+    }
     
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { name, phone, bio, avatar, socialLinks },
+      updateData,
       { new: true, runValidators: true }
     ).select('-password');
     
