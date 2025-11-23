@@ -13,7 +13,14 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: [
+    process.env.CLIENT_URL || 'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://gdg-guc3n1h1h-orisho7s-projects.vercel.app',
+    'https://gdg-8v8jijt9x-orisho7s-projects.vercel.app',
+    /\.vercel\.app$/
+  ],
   credentials: true
 }));
 app.use(express.json());
