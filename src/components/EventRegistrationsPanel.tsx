@@ -1,36 +1,63 @@
-import { useState } from "react";
-import { Users, CheckCircle, XCircle, QrCode, Download, Mail, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Users, CheckCircle, XCircle, QrCode, Download, Mail, Search, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { getEventRegistrations, updateRegistrationStatus, EventRegistration } from "../lib/storage";
+import { registrationService } from "../services/registrationService";
 
 interface EventRegistrationsPanelProps {
   eventId: string;
   eventTitle: string;
+  onClose?: () => void;
 }
 
-export function EventRegistrationsPanel({ eventId, eventTitle }: EventRegistrationsPanelProps) {
+export function EventRegistrationsPanel({ eventId, eventTitle, onClose }: EventRegistrationsPanelProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const registrations = getEventRegistrations(eventId);
+  const [registrations, setRegistrations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadRegistrations();
+  }, [eventId]);
+
+  const loadRegistrations = async () => {
+    try {
+      setLoading(true);
+      const response = await registrationService.getRegistrations({ eventId });
+      if (response.success) {
+        setRegistrations(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load registrations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredRegistrations = registrations.filter(reg =>
-    reg.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    reg.userEmail.toLowerCase().includes(searchQuery.toLowerCase())
+    reg.user?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    reg.user?.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const stats = {
     total: registrations.length,
-    attended: registrations.filter(r => r.status === 'attended').length,
-    registered: registrations.filter(r => r.status === 'registered').length,
+    attended: registrations.filter(r => r.attended).length,
+    registered: registrations.filter(r => r.status === 'registered' || r.status === 'confirmed').length,
     cancelled: registrations.filter(r => r.status === 'cancelled').length
   };
 
-  const handleMarkAttended = (id: string) => {
-    if (confirm('هل تريد تسجيل حضور هذا المشارك؟')) {
-      updateRegistrationStatus(id, 'attended');
-      window.location.reload(); // Refresh to show updated data
+  const handleMarkAttended = async (id: string) => {
+    if (!confirm('هل تريد تسجيل حضور هذا المشارك؟')) return;
+
+    try {
+      const response = await registrationService.markAttendance(id);
+      if (response.success) {
+        await loadRegistrations(); // Reload data
+      }
+    } catch (error) {
+      console.error('Failed to mark attendance:', error);
+      alert('فشل تسجيل الحضور');
     }
   };
 
@@ -56,11 +83,26 @@ export function EventRegistrationsPanel({ eventId, eventTitle }: EventRegistrati
     link.click();
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl mb-2">إدارة التسجيلات</h2>
-        <p className="text-gray-600">{eventTitle}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl mb-2">إدارة التسجيلات</h2>
+          <p className="text-muted-foreground">{eventTitle}</p>
+        </div>
+        {onClose && (
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -165,51 +207,53 @@ export function EventRegistrationsPanel({ eventId, eventTitle }: EventRegistrati
                 </thead>
                 <tbody>
                   {filteredRegistrations.map((registration, index) => (
-                    <tr key={registration.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={registration._id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4">{index + 1}</td>
-                      <td className="py-3 px-4">{registration.userName}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{registration.userEmail}</td>
+                      <td className="py-3 px-4">{registration.user?.name || 'N/A'}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{registration.user?.email || 'N/A'}</td>
                       <td className="py-3 px-4 text-sm text-gray-600">
-                        {new Date(registration.registeredAt).toLocaleDateString('ar')}
+                        {new Date(registration.createdAt).toLocaleDateString('ar-SA', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </td>
                       <td className="py-3 px-4">
                         <Badge
                           className={
-                            registration.status === 'attended'
+                            registration.attended
                               ? 'bg-[#34a853]'
                               : registration.status === 'cancelled'
                               ? 'bg-[#ea4335]'
                               : 'bg-[#4285f4]'
                           }
                         >
-                          {registration.status === 'attended' ? 'حضر' :
-                           registration.status === 'cancelled' ? 'ملغي' : 'مسجل'}
+                          {registration.attended ? 'حضر' :
+                           registration.status === 'cancelled' ? 'ملغي' : 
+                           registration.status === 'confirmed' ? 'مؤكد' : 'مسجل'}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex gap-2">
-                          {registration.status === 'registered' && (
+                          {!registration.attended && registration.status !== 'cancelled' && (
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleMarkAttended(registration.id)}
+                              onClick={() => handleMarkAttended(registration._id)}
+                              className="hover:bg-[#34a853] hover:text-white"
                             >
-                              <CheckCircle className="w-4 h-4" />
+                              <CheckCircle className="w-4 h-4 ml-1" />
+                              تسجيل حضور
                             </Button>
                           )}
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => handleSendEmail(registration.userEmail)}
+                            variant="ghost"
+                            onClick={() => handleSendEmail(registration.user?.email)}
                           >
                             <Mail className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => alert(`QR: ${registration.qrCode}`)}
-                          >
-                            <QrCode className="w-4 h-4" />
                           </Button>
                         </div>
                       </td>

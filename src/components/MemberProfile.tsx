@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Link as LinkIcon, Edit, Save, Camera, Github, Linkedin, Twitter, Star, Code, Globe, Award, Zap } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -7,6 +7,7 @@ import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { motion } from "motion/react";
+import { userService } from "../services/userService";
 
 interface MemberProfileProps {
   userId: string;
@@ -15,24 +16,91 @@ interface MemberProfileProps {
 
 export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState({
-    name: "سارة الرشيد",
-    email: "sarah@mustaqbal.edu",
-    phone: "+966 50 123 4567",
-    location: "الرياض، المملكة العربية السعودية",
-    bio: "مطورة برمجيات شغوفة بالذكاء الاصطناعي والتعلم الآلي. أحب بناء حلول مبتكرة للمشاكل الواقعية.",
-    skills: ["React", "Python", "Machine Learning", "Node.js", "TypeScript"],
-    interests: ["AI", "Web Development", "Cloud Computing"],
-    github: "https://github.com/sarah",
-    linkedin: "https://linkedin.com/in/sarah",
-    twitter: "https://twitter.com/sarah",
-    website: "https://sarah.dev"
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
+    skills: [] as string[],
+    interests: [] as string[],
+    github: "",
+    linkedin: "",
+    twitter: "",
+    website: "",
+    points: 0,
+    level: 0,
+    department: "",
+    badges: [] as any[]
   });
 
-  const handleSave = () => {
-    // Save profile changes
-    setIsEditing(false);
+  useEffect(() => {
+    loadUserProfile();
+  }, [userId]);
+
+  const loadUserProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await userService.getUser(userId);
+      if (response.success) {
+        const user = response.data;
+        setProfile({
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          location: user.location || "",
+          bio: user.bio || "لم يتم إضافة وصف بعد",
+          skills: user.skills || [],
+          interests: user.interests || [],
+          github: user.github || "",
+          linkedin: user.linkedin || "",
+          twitter: user.twitter || "",
+          website: user.website || "",
+          points: user.points || 0,
+          level: user.level || 1,
+          department: user.department || "none",
+          badges: user.badges || []
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load user profile:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSave = async () => {
+    try {
+      const response = await userService.updateUser(userId, {
+        bio: profile.bio,
+        skills: profile.skills,
+        interests: profile.interests,
+        github: profile.github,
+        linkedin: profile.linkedin,
+        twitter: profile.twitter,
+        website: profile.website,
+        phone: profile.phone,
+        location: profile.location
+      });
+      
+      if (response.success) {
+        setIsEditing(false);
+        alert('تم تحديث الملف الشخصي بنجاح!');
+      }
+    } catch (error: any) {
+      console.error('Failed to update profile:', error);
+      alert('فشل تحديث الملف الشخصي');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },

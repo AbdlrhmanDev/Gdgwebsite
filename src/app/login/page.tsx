@@ -1,8 +1,7 @@
 import { Login } from "../../components/Login";
-import { type UserRole } from "../../App";
 
 interface LoginPageProps {
-  onLogin: (email: string, password: string, role: UserRole) => void;
+  onLogin: (email: string, password: string) => void;
   onRegisterClick: () => void;
 }
 

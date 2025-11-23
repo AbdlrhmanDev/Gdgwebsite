@@ -2,12 +2,93 @@ import { Users, Calendar, Award, TrendingUp, ArrowUp, ArrowDown, Clock, CheckCir
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Progress } from "./ui/progress";
 import { Badge } from "./ui/badge";
+import { useState, useEffect } from "react";
+import { userService } from "../services/userService";
+import { eventService } from "../services/eventService";
 
 export function DashboardOverview() {
-  const stats = [
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalMembers: 0,
+    activeEvents: 0,
+    attendanceRate: 0,
+    certificatesIssued: 0
+  });
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      // Load users count
+      const usersResponse = await userService.getUsers();
+      // Load events
+      const eventsResponse = await eventService.getEvents();
+      
+      if (usersResponse.success && eventsResponse.success) {
+        const users = usersResponse.data;
+        const events = eventsResponse.data;
+        
+        // Calculate stats
+        const activeEvents = events.filter((e: any) => e.status === 'active' || e.status === 'التسجيل مفتوح').length;
+        const upcomingEvts = events.filter((e: any) => new Date(e.date) > new Date()).slice(0, 3);
+        
+        setStats({
+          totalMembers: users.length,
+          activeEvents: activeEvents,
+          attendanceRate: 87, // This should come from attendance tracking
+          certificatesIssued: 342 // This should come from certificates issued
+        });
+        
+        setUpcomingEvents(upcomingEvts.map((e: any) => ({
+          title: e.title,
+          date: new Date(e.date).toLocaleDateString('ar-SA'),
+          registrations: e.attendees || 0,
+          capacity: e.capacity,
+          status: e.attendees >= e.capacity ? 'full' : 'open'
+        })));
+        
+        // Set recent activities (last events created/updated)
+        setRecentActivities([
+          {
+            type: "event",
+            title: `تم إنشاء فعالية جديدة: ${events[0]?.title || 'فعالية جديدة'}`,
+            time: "منذ 5 دقائق",
+            icon: Calendar,
+            color: "#4285f4"
+          },
+          {
+            type: "member",
+            title: `انضم ${users.slice(-15).length} عضو جديد إلى المجتمع`,
+            time: "منذ ساعة",
+            icon: Users,
+            color: "#34a853"
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  const statsArray = [
     {
       title: "إجمالي الأعضاء",
-      value: "524",
+      value: stats.totalMembers.toString(),
       change: "+12.5%",
       trend: "up",
       icon: Users,
@@ -16,7 +97,7 @@ export function DashboardOverview() {
     },
     {
       title: "الفعاليات النشطة",
-      value: "8",
+      value: stats.activeEvents.toString(),
       change: "+2",
       trend: "up",
       icon: Calendar,
@@ -25,7 +106,7 @@ export function DashboardOverview() {
     },
     {
       title: "معدل الحضور",
-      value: "87%",
+      value: `${stats.attendanceRate}%`,
       change: "+5.2%",
       trend: "up",
       icon: TrendingUp,
@@ -34,67 +115,12 @@ export function DashboardOverview() {
     },
     {
       title: "الشهادات الممنوحة",
-      value: "342",
+      value: stats.certificatesIssued.toString(),
       change: "+28",
       trend: "up",
       icon: Award,
       color: "#ea4335",
       subtitle: "هذا الفصل"
-    }
-  ];
-
-  const recentActivities = [
-    {
-      type: "event",
-      title: "تم إنشاء فعالية جديدة: ورشة React المتقدمة",
-      time: "منذ 5 دقائق",
-      icon: Calendar,
-      color: "#4285f4"
-    },
-    {
-      type: "member",
-      title: "انضم 15 عضو جديد إلى المجتمع",
-      time: "منذ ساعة",
-      icon: Users,
-      color: "#34a853"
-    },
-    {
-      type: "certificate",
-      title: "تم إصدار 12 شهادة جديدة",
-      time: "منذ ساعتين",
-      icon: Award,
-      color: "#f9ab00"
-    },
-    {
-      type: "event",
-      title: "تم تحديث معلومات فعالية الهاكاثون",
-      time: "منذ 3 ساعات",
-      icon: Calendar,
-      color: "#4285f4"
-    }
-  ];
-
-  const upcomingEvents = [
-    {
-      title: "ورشة تطوير Flutter",
-      date: "20 نوفمبر 2025",
-      registrations: 45,
-      capacity: 60,
-      status: "open"
-    },
-    {
-      title: "محاضرة الذكاء الاصطناعي",
-      date: "22 نوفمبر 2025",
-      registrations: 100,
-      capacity: 100,
-      status: "full"
-    },
-    {
-      title: "هاكاثون السحابة",
-      date: "25 نوفمبر 2025",
-      registrations: 150,
-      capacity: 200,
-      status: "open"
     }
   ];
 
@@ -116,7 +142,7 @@ export function DashboardOverview() {
 
       {/* Stats Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
+        {statsArray.map((stat, index) => {
           const Icon = stat.icon;
           const isPositive = stat.trend === "up";
           

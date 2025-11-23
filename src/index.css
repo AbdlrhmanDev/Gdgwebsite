@@ -213,6 +213,11 @@
     padding: 0;
   }
 
+  /* Fix for gradient text visibility */
+  .text-transparent {
+    color: transparent !important;
+  }
+
   html, :host {
     -webkit-text-size-adjust: 100%;
     tab-size: 4;

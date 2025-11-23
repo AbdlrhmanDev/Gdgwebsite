@@ -6,9 +6,11 @@ import { useState, useEffect } from "react";
 
 interface HeroProps {
   lang: Language;
+  onLoginClick: () => void;
+  isLoggedIn: boolean;
 }
 
-export function Hero({ lang }: HeroProps) {
+export function Hero({ lang, onLoginClick, isLoggedIn }: HeroProps) {
   const t = (key: string) => getTranslation(lang, key);
   const isRTL = lang === 'ar';
 
@@ -89,9 +91,9 @@ export function Hero({ lang }: HeroProps) {
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-foreground mb-6 leading-[1.1]"
         >
           {lang === 'ar' ? (
-             <>حيث يلتقي <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">الكود</span><br/>بالمجتمع الإبداعي.</>
+             <>حيث يلتقي <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4285f4] via-[#34a853] via-[#f9ab00] to-[#ea4335]">الكود</span><br/>بالمجتمع الإبداعي.</>
           ) : (
-             <>Where <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">Code</span><br/>Meets Community.</>
+             <>Where <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4285f4] via-[#34a853] via-[#f9ab00] to-[#ea4335]">Code</span><br/>Meets Community.</>
           )}
         </motion.h1>
 
@@ -107,20 +109,23 @@ export function Hero({ lang }: HeroProps) {
             : 'The ultimate platform for developers at Future University. Join us to learn modern tech, ship real projects, and connect with creative minds.'}
         </motion.p>
 
-        {/* CTA Buttons */}
+        {/* CTA Button */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex flex-col sm:flex-row items-center gap-4 mb-16 w-full sm:w-auto"
+          className="flex items-center justify-center mb-16 w-full sm:w-auto"
         >
-          <Button size="lg" className="h-14 px-8 w-full sm:w-auto rounded-full bg-[#4285f4] hover:bg-[#3367d6] text-white text-base font-medium shadow-lg shadow-blue-500/25 transition-all hover:scale-105 hover:-translate-y-0.5">
-            {t('hero.joinCommunity')}
+          <Button 
+            size="lg" 
+            onClick={onLoginClick}
+            className="h-14 px-8 w-full sm:w-auto rounded-full bg-[#4285f4] hover:bg-[#3367d6] text-white text-base font-medium shadow-lg shadow-blue-500/25 transition-all hover:scale-105 hover:-translate-y-0.5"
+          >
+            {isLoggedIn 
+              ? (lang === 'ar' ? 'الذهاب إلى لوحة التحكم' : 'Go to Dashboard')
+              : (lang === 'ar' ? 'تسجيل الدخول' : 'Login')
+            }
             <ArrowRight className={`w-4 h-4 ${isRTL ? 'mr-2 rotate-180' : 'ml-2'}`} />
-          </Button>
-          <Button size="lg" variant="outline" className="h-14 px-8 w-full sm:w-auto rounded-full border-2 text-base font-medium bg-background/50 backdrop-blur-sm hover:bg-accent transition-all hover:scale-105 hover:-translate-y-0.5">
-            <Calendar className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-            {t('hero.viewEvents')}
           </Button>
         </motion.div>
 

@@ -1,9 +1,10 @@
 import { Navigation } from "../components/Navigation";
 import { Hero } from "../components/Hero";
-import { About } from "../components/About";
-import { Events } from "../components/Events";
-import { Team } from "../components/Team";
-import { Contact } from "../components/Contact";
+import { About } from '../components/About';
+import { Events } from '../components/Events';
+import { Team } from '../components/Team';
+import { Leaderboard } from '../components/Leaderboard';
+import { Contact } from '../components/Contact';
 import { Footer } from "../components/Footer";
 import { type Language } from "../lib/i18n";
 import { type Event } from "../lib/storage";
@@ -13,7 +14,6 @@ interface HomePageProps {
   isDarkMode: boolean;
   events: Event[];
   onLanguageToggle: () => void;
-  onDarkModeToggle: () => void;
   onLoginClick: () => void;
   onRefreshEvents: () => void;
   userEmail?: string;
@@ -26,7 +26,6 @@ export default function HomePage({
   isDarkMode,
   events,
   onLanguageToggle,
-  onDarkModeToggle,
   onLoginClick,
   onRefreshEvents,
   userEmail,
@@ -45,22 +44,15 @@ export default function HomePage({
         currentLang={currentLang}
         onLanguageToggle={onLanguageToggle}
         isDarkMode={isDarkMode}
-        onDarkModeToggle={onDarkModeToggle}
       />
-      
-      {/* Login button overlay for quick access - consistent with original design */}
-      <div className={`fixed ${currentLang === 'ar' ? 'left-4' : 'right-4'} top-20 z-40`}>
-        <button
-          onClick={onLoginClick}
-          className="px-4 py-2 bg-[#4285f4] text-white rounded-lg hover:bg-[#3367d6] shadow-lg transition-colors"
-        >
-          {currentLang === 'ar' ? 'دخول اللوحة' : 'Panel Login'}
-        </button>
-      </div>
       
       <main>
         <section id="home">
-          <Hero lang={currentLang} />
+          <Hero 
+            lang={currentLang}
+            onLoginClick={onLoginClick}
+            isLoggedIn={isLoggedIn || false}
+          />
         </section>
         <section id="about">
           <About lang={currentLang} />
@@ -77,6 +69,9 @@ export default function HomePage({
         </section>
         <section id="team">
           <Team lang={currentLang} />
+        </section>
+        <section id="leaderboard">
+          <Leaderboard lang={currentLang} />
         </section>
         <section id="contact">
           <Contact lang={currentLang} />

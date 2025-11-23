@@ -9,16 +9,19 @@ import { UserDashboard } from "../../components/UserDashboard";
 import { MyEventsPanel } from "../../components/MyEventsPanel";
 import { TasksPanel } from "../../components/TasksPanel";
 import { DepartmentsPanel } from "../../components/DepartmentsPanel";
+import { MembersPanel } from "../../components/MembersPanel";
+import { LeaderboardPanel } from "../../components/LeaderboardPanel";
 import { CreateTaskModal } from "../../components/CreateTaskModal";
 import { type Event } from "../../lib/storage";
 import { type UserRole } from "../../App";
 import { useState } from "react";
 
-export type DashboardView = 'overview' | 'events' | 'analytics' | 'profile' | 'gamification' | 'members' | 'settings' | 'browse' | 'myevents' | 'tasks' | 'departments';
+export type DashboardView = 'overview' | 'events' | 'analytics' | 'profile' | 'gamification' | 'members' | 'settings' | 'browse' | 'myevents' | 'tasks' | 'departments' | 'leaderboard';
 
 interface DashboardPageProps {
   userRole: UserRole;
   userEmail: string;
+  userId: string;
   events: Event[];
   onLogout: () => void;
   onNavigateToSite: () => void;
@@ -32,6 +35,7 @@ interface DashboardPageProps {
 export default function DashboardPage({
   userRole,
   userEmail,
+  userId,
   events,
   onLogout,
   onNavigateToSite,
@@ -69,17 +73,14 @@ export default function DashboardPage({
       {userRole === 'member' && (
         <>
           {dashboardView === 'overview' && <DashboardOverview />}
-          {dashboardView === 'events' && (
+          {(dashboardView === 'myevents' || dashboardView === 'events') && (
             <MyEventsPanel userEmail={userEmail} />
           )}
           {dashboardView === 'profile' && (
-            <MemberProfile userId={userEmail} isOwnProfile={true} />
+            <MemberProfile userId={userId} isOwnProfile={true} />
           )}
           {dashboardView === 'gamification' && (
             <GamificationDashboard {...gamificationData} />
-          )}
-          {dashboardView === 'tasks' && (
-            <TasksPanel userEmail={userEmail} userRole={userRole} onCreateTask={() => setShowCreateTask(true)} />
           )}
           {dashboardView === 'departments' && (
             <DepartmentsPanel />
@@ -102,16 +103,14 @@ export default function DashboardPage({
           )}
           {dashboardView === 'analytics' && <AnalyticsDashboard />}
           {dashboardView === 'profile' && (
-            <MemberProfile userId={userEmail} isOwnProfile={true} />
+            <MemberProfile userId={userId} isOwnProfile={true} />
           )}
           {dashboardView === 'gamification' && (
             <GamificationDashboard {...gamificationData} />
           )}
           {dashboardView === 'settings' && <SettingsPanel />}
           {dashboardView === 'members' && (
-            <div className="text-center py-12">
-              <p className="text-gray-600">قريباً: إدارة الأعضاء</p>
-            </div>
+            <MembersPanel />
           )}
           {dashboardView === 'myevents' && (
             <MyEventsPanel userEmail={userEmail} />
@@ -121,6 +120,9 @@ export default function DashboardPage({
           )}
           {dashboardView === 'departments' && (
             <DepartmentsPanel />
+          )}
+          {dashboardView === 'leaderboard' && (
+            <LeaderboardPanel />
           )}
         </>
       )}

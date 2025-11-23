@@ -1,0 +1,21 @@
+const express = require('express');
+const router = express.Router();
+const {
+  registerForEvent,
+  getMyRegistrations,
+  getRegistrations,
+  cancelRegistration,
+  markAttendance,
+  addFeedback
+} = require('../controllers/registrationController');
+const { protect, authorize } = require('../middleware/auth');
+
+router.post('/', protect, registerForEvent);
+router.get('/my', protect, getMyRegistrations);
+router.get('/', protect, authorize('admin'), getRegistrations);
+
+router.put('/:id/cancel', protect, cancelRegistration);
+router.put('/:id/attend', protect, authorize('admin'), markAttendance);
+router.put('/:id/feedback', protect, addFeedback);
+
+module.exports = router;

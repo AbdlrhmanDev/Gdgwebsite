@@ -6,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
+import { useState, useEffect } from "react";
+import { userService } from "../services/userService";
 
 interface GamificationDashboardProps {
   userPoints: number;
@@ -40,14 +42,38 @@ export function GamificationDashboard({ userPoints, userLevel, userRank, badges 
   const pointsToNextLevel = 1000;
   const currentLevelProgress = (userPoints % pointsToNextLevel) / pointsToNextLevel * 100;
   
-  // Mock Leaderboard Data
-  const leaderboardData = [
-    { id: 1, name: "أحمد محمد", points: 2450, avatar: "", level: 8, badge: "🏆" },
-    { id: 2, name: "سارة أحمد", points: 2300, avatar: "", level: 7, badge: "🥈" },
-    { id: 3, name: "عمر خالد", points: 2150, avatar: "", level: 7, badge: "🥉" },
-    { id: 4, name: "نورة علي", points: 1900, avatar: "", level: 6, badge: "⭐" },
-    { id: 5, name: "فهد سعد", points: 1850, avatar: "", level: 6, badge: "⭐" },
-  ];
+  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadLeaderboard();
+  }, []);
+
+  const loadLeaderboard = async () => {
+    try {
+      setLoading(true);
+      const response = await userService.getUsers();
+      if (response.success) {
+        // Sort by points descending and take top 10
+        const sortedUsers = response.data
+          .sort((a: any, b: any) => b.points - a.points)
+          .slice(0, 10)
+          .map((user: any, index: number) => ({
+            id: user._id,
+            name: user.name,
+            points: user.points,
+            avatar: user.avatar || "",
+            level: user.level,
+            badge: index === 0 ? "🏆" : index === 1 ? "🥈" : index === 2 ? "🥉" : "⭐"
+          }));
+        setLeaderboardData(sortedUsers);
+      }
+    } catch (error) {
+      console.error('Failed to load leaderboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -107,9 +133,7 @@ export function GamificationDashboard({ userPoints, userLevel, userRank, badges 
                     transition={{ duration: 1.5, ease: "easeOut" }}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
-                   أنت أفضل من 85% من الأعضاء هذا الشهر! استمر في العمل الرائع.
-                </p>
+              
               </div>
             </div>
           </div>
@@ -235,8 +259,17 @@ export function GamificationDashboard({ userPoints, userLevel, userRank, badges 
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {leaderboardData.map((user, index) => (
+              {loading ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  جاري التحميل...
+                </div>
+              ) : leaderboardData.length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  لا توجد بيانات متاحة
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {leaderboardData.map((user, index) => (
                   <div 
                     key={user.id} 
                     className={`flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors ${
@@ -269,6 +302,7 @@ export function GamificationDashboard({ userPoints, userLevel, userRank, badges 
                   </div>
                 ))}
               </div>
+              )}
             </CardContent>
           </Card>
 

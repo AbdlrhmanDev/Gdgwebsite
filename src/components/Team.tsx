@@ -1,6 +1,8 @@
 import { Linkedin, Github, Mail } from "lucide-react";
 import { motion } from "motion/react";
 import { getTranslation, type Language } from "../lib/i18n";
+import { useState, useEffect } from "react";
+import { userService } from "../services/userService";
 
 interface TeamProps {
   lang: Language;
@@ -8,45 +10,53 @@ interface TeamProps {
 
 export function Team({ lang }: TeamProps) {
   const t = (key: string) => getTranslation(lang, key);
+  const [team, setTeam] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const team = [
-    {
-      name: "Sarah Al-Rashid",
-      role: "Lead",
-      color: "#4285f4",
-      initial: "S"
-    },
-    {
-      name: "Mohammed Hassan",
-      role: "Co-Lead",
-      color: "#34a853",
-      initial: "M"
-    },
-    {
-      name: "Fatima Ahmed",
-      role: "Technical Lead",
-      color: "#f9ab00",
-      initial: "F"
-    },
-    {
-      name: "Ali Khalid",
-      role: "Events Coordinator",
-      color: "#ea4335",
-      initial: "A"
-    },
-    {
-      name: "Layla Ibrahim",
-      role: "Marketing Lead",
-      color: "#4285f4",
-      initial: "L"
-    },
-    {
-      name: "Omar Saeed",
-      role: "Community Manager",
-      color: "#34a853",
-      initial: "O"
+  useEffect(() => {
+    loadTeamMembers();
+  }, []);
+
+  const loadTeamMembers = async () => {
+    try {
+      setLoading(true);
+      // Use public endpoint that doesn't require authentication
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/users/public/team`);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Filter only admins and members, sort by role (admins first) then by points
+        const teamMembers = data.data
+          .filter((user: any) => user.role === 'admin' || user.role === 'member')
+          .sort((a: any, b: any) => {
+            if (a.role === 'admin' && b.role !== 'admin') return -1;
+            if (a.role !== 'admin' && b.role === 'admin') return 1;
+            return b.points - a.points;
+          })
+          .slice(0, 6); // Show top 6 team members
+        
+        setTeam(teamMembers);
+      }
+    } catch (error) {
+      console.error('Failed to load team members:', error);
+      // Set empty team on error to prevent infinite loop
+      setTeam([]);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const getRoleLabel = (role: string) => {
+    if (lang === 'ar') {
+      return role === 'admin' ? 'قائد الفريق' : 'عضو الفريق';
+    }
+    return role === 'admin' ? 'Team Lead' : 'Team Member';
+  };
+
+  const getColorForIndex = (index: number) => {
+    const colors = ['#4285f4', '#34a853', '#f9ab00', '#ea4335', '#4285f4', '#34a853'];
+    return colors[index % colors.length];
+  };
 
   return (
     <div className="bg-background py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -78,45 +88,112 @@ export function Team({ lang }: TeamProps) {
           </motion.p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
-          {team.map((member, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="group bg-card border border-border rounded-[2rem] p-8 text-center hover:shadow-2xl hover:shadow-black/5 transition-all duration-300 hover:-translate-y-2"
-            >
-              <div className="relative w-28 h-28 mx-auto mb-6">
-                <div 
-                  className="absolute inset-0 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition-opacity"
-                  style={{ backgroundColor: member.color }}
-                />
-                <div
-                  className="relative w-full h-full rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg group-hover:scale-105 transition-transform duration-500"
-                  style={{ backgroundColor: member.color }}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4285f4]"></div>
+          </div>
+        ) : team.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-muted-foreground">
+              {lang === 'ar' ? 'لا يوجد أعضاء فريق حالياً' : 'No team members available'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+            {team.map((member, index) => {
+              const color = getColorForIndex(index);
+              const initial = member.name.charAt(0).toUpperCase();
+              
+              return (
+                <motion.div
+                  key={member._id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group bg-card border border-border rounded-[2rem] p-8 text-center hover:shadow-2xl hover:shadow-black/5 transition-all duration-300 hover:-translate-y-2"
                 >
-                  {member.initial}
-                </div>
-              </div>
+                  <div className="relative w-28 h-28 mx-auto mb-6">
+                    <div 
+                      className="absolute inset-0 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition-opacity"
+                      style={{ backgroundColor: color }}
+                    />
+                    {member.avatar ? (
+                      <img
+                        src={member.avatar}
+                        alt={member.name}
+                        className="relative w-full h-full rounded-full object-cover shadow-lg group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div
+                        className="relative w-full h-full rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg group-hover:scale-105 transition-transform duration-500"
+                        style={{ backgroundColor: color }}
+                      >
+                        {initial}
+                      </div>
+                    )}
+                  </div>
 
-              <h3 className="text-2xl font-bold mb-1 group-hover:text-primary transition-colors">{member.name}</h3>
-              <p className="text-muted-foreground font-medium mb-6">{member.role}</p>
+                  <h3 className="text-2xl font-bold mb-1 group-hover:text-primary transition-colors">
+                    {member.name}
+                  </h3>
+                  <p className="text-muted-foreground font-medium mb-2">
+                    {getRoleLabel(member.role)}
+                  </p>
+                  {member.department && (
+                    <p className="text-sm text-muted-foreground mb-4 flex items-center justify-center gap-2">
+                      <span 
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: member.department.color }}
+                      />
+                      {member.department.nameAr}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-center gap-2 mb-6">
+                    <span className="text-sm font-medium text-[#f9ab00]">
+                      {member.points || 0} {lang === 'ar' ? 'نقطة' : 'points'}
+                    </span>
+                    <span className="text-sm text-muted-foreground">•</span>
+                    <span className="text-sm font-medium text-[#4285f4]">
+                      {lang === 'ar' ? 'المستوى' : 'Level'} {member.level || 1}
+                    </span>
+                  </div>
 
-              <div className="flex justify-center gap-4">
-                {[Linkedin, Github, Mail].map((Icon, i) => (
-                  <button
-                    key={i}
-                    className="w-10 h-10 rounded-full bg-muted hover:bg-foreground/5 text-muted-foreground hover:text-foreground flex items-center justify-center transition-all hover:scale-110"
-                  >
-                    <Icon className="w-5 h-5" />
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                  <div className="flex justify-center gap-4">
+                    {member.email && (
+                      <a
+                        href={`mailto:${member.email}`}
+                        className="w-10 h-10 rounded-full bg-muted hover:bg-foreground/5 text-muted-foreground hover:text-foreground flex items-center justify-center transition-all hover:scale-110"
+                      >
+                        <Mail className="w-5 h-5" />
+                      </a>
+                    )}
+                    {member.github && (
+                      <a
+                        href={member.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 rounded-full bg-muted hover:bg-foreground/5 text-muted-foreground hover:text-foreground flex items-center justify-center transition-all hover:scale-110"
+                      >
+                        <Github className="w-5 h-5" />
+                      </a>
+                    )}
+                    {member.linkedin && (
+                      <a
+                        href={member.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 rounded-full bg-muted hover:bg-foreground/5 text-muted-foreground hover:text-foreground flex items-center justify-center transition-all hover:scale-110"
+                      >
+                        <Linkedin className="w-5 h-5" />
+                      </a>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
 
         <motion.div 
           initial={{ opacity: 0, y: 30 }}

@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { getTranslation, type Language } from "./lib/i18n";
-import { Event, getEvents, addEvent as saveEvent, updateEvent as saveUpdateEvent, deleteEvent as saveDeleteEvent, initializeDefaultData } from "./lib/storage";
-import { initializeDepartmentsData } from "./lib/departments";
+import { authService } from "./services/authService";
+import { eventService, type Event as ApiEvent } from "./services/eventService";
+import { userService } from "./services/userService";
+import { badgeService } from "./services/badgeService";
 
 // Import Pages mimicking Next.js Routing
 import HomePage from "./app/page";
@@ -11,45 +13,145 @@ import DashboardPage from "./app/dashboard/page";
 
 export type UserRole = 'admin' | 'member' | 'user';
 
+// Map API event to local event format
+const mapApiEvent = (apiEvent: ApiEvent): any => ({
+  id: apiEvent._id || apiEvent.id,
+  title: apiEvent.title,
+  titleEn: apiEvent.titleEn,
+  description: apiEvent.description,
+  descriptionEn: apiEvent.descriptionEn,
+  date: apiEvent.date,
+  time: apiEvent.time,
+  location: apiEvent.location,
+  locationEn: apiEvent.locationEn,
+  type: apiEvent.type,
+  category: apiEvent.category,
+  image: apiEvent.image,
+  capacity: apiEvent.capacity,
+  attendees: apiEvent.attendees,
+  registrationMethod: apiEvent.registrationMethod,
+  registrationUrl: apiEvent.registrationUrl,
+  status: apiEvent.status,
+  featured: apiEvent.featured,
+  tags: apiEvent.tags,
+  createdAt: apiEvent.createdAt,
+  createdBy: apiEvent.createdBy,
+});
+
 export default function App() {
-  // Routing State
-  const [currentRoute, setCurrentRoute] = useState<string>('/');
+  // Routing State - initialize from URL
+  const [currentRoute, setCurrentRoute] = useState<string>(() => {
+    return window.location.pathname || '/';
+  });
   
   // App State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('user');
   const [userEmail, setUserEmail] = useState('');
+  const [userId, setUserId] = useState('');
   const [currentLang, setCurrentLang] = useState<Language>('ar');
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode] = useState(true); // Always dark mode
   const [refreshKey, setRefreshKey] = useState(0);
+  const [loading, setLoading] = useState(true);
   
-  // Load events from storage
-  const [events, setEvents] = useState<Event[]>([]);
+  // Load events from API
+  const [events, setEvents] = useState<any[]>([]);
+  const [gamificationData, setGamificationData] = useState({
+    userPoints: 0,
+    userLevel: 1,
+    userRank: 0,
+    badges: []
+  });
 
-  // Initialize data and load events
+  // Sync route changes with browser URL
   useEffect(() => {
-    initializeDefaultData();
-    initializeDepartmentsData();
+    window.history.pushState({}, '', currentRoute);
+  }, [currentRoute]);
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentRoute(window.location.pathname || '/');
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const user = authService.getCurrentUser();
+    if (user && authService.isAuthenticated()) {
+      setIsLoggedIn(true);
+      setUserRole(user.role);
+      setUserEmail(user.email);
+      setUserId(user.id);
+      loadGamificationData(user.id);
+      // Redirect to dashboard if on login/register pages
+      if (currentRoute === '/login' || currentRoute === '/register') {
+        setCurrentRoute('/dashboard');
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  // Load gamification data
+  const loadGamificationData = async (userId: string) => {
+    try {
+      // Fetch user data for points, level
+      const userResponse = await userService.getUser(userId);
+      if (userResponse.success) {
+        const userData = userResponse.data;
+        
+        // Fetch all users to calculate rank
+        const usersResponse = await userService.getUsers();
+        let userRank = 0;
+        if (usersResponse.success) {
+          const sortedUsers = usersResponse.data.sort((a: any, b: any) => b.points - a.points);
+          userRank = sortedUsers.findIndex((u: any) => u._id === userId) + 1;
+        }
+        
+        // Fetch user badges
+        const badgesResponse = await badgeService.getBadges();
+        let userBadges: any[] = [];
+        if (badgesResponse.success) {
+          userBadges = badgesResponse.data.map((badge: any) => ({
+            id: badge._id,
+            name: badge.name,
+            description: badge.description,
+            icon: badge.icon || '🏆',
+            earned: userData.badges?.includes(badge._id) || false,
+            earnedDate: userData.badges?.includes(badge._id) ? badge.createdAt : undefined
+          }));
+        }
+        
+        setGamificationData({
+          userPoints: userData.points || 0,
+          userLevel: userData.level || 1,
+          userRank: userRank,
+          badges: userBadges
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load gamification data:', error);
+    }
+  };
+
+  // Load events from API
+  useEffect(() => {
     loadEvents();
   }, [refreshKey]);
 
-  const loadEvents = () => {
-    setEvents(getEvents());
-  };
-  
-  // Sample gamification data
-  const gamificationData = {
-    userPoints: 1250,
-    userLevel: 5,
-    userRank: 12,
-    badges: [
-      { id: '1', name: 'المشارك النشط', description: 'حضور 10 فعاليات', icon: '🎯', earned: true, earnedDate: '15 نوفمبر 2025' },
-      { id: '2', name: 'المبتكر', description: 'نشر 5 مشاريع', icon: '💡', earned: true, earnedDate: '20 أكتوبر 2025' },
-      { id: '3', name: 'القائد', description: 'تنظيم فعالية', icon: '👑', earned: false },
-      { id: '4', name: 'الخبير', description: 'الوصول للمستوى 10', icon: '🏆', earned: false },
-      { id: '5', name: 'المعلم', description: 'مساعدة 20 عضو', icon: '📚', earned: true, earnedDate: '5 نوفمبر 2025' },
-      { id: '6', name: 'المتواصل', description: 'الاتصال مع 50 عضو', icon: '🤝', earned: false }
-    ]
+  const loadEvents = async () => {
+    try {
+      const response = await eventService.getEvents();
+      if (response.success) {
+        setEvents(response.data.map(mapApiEvent));
+      }
+    } catch (error) {
+      console.error('Failed to load events:', error);
+      setEvents([]);
+    }
   };
 
   // Apply language direction
@@ -76,69 +178,96 @@ export default function App() {
     setCurrentLang(prev => prev === 'ar' ? 'en' : 'ar');
   };
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(prev => !prev);
-  };
-
-  const handleLogin = (email: string, password: string, role: UserRole) => {
-    // Demo authentication
-    const demoCredentials = {
-      admin: { email: "admin@gdg.com", password: "admin123" },
-      member: { email: "member@gdg.com", password: "member123" },
-      user: { email: "user@gdg.com", password: "user123" }
-    };
-
-    if (
-      (role === 'admin' && email === demoCredentials.admin.email && password === demoCredentials.admin.password) ||
-      (role === 'member' && email === demoCredentials.member.email && password === demoCredentials.member.password) ||
-      (role === 'user' && email === demoCredentials.user.email && password === demoCredentials.user.password)
-    ) {
-      setIsLoggedIn(true);
-      setUserRole(role);
-      setUserEmail(email);
-      setCurrentRoute('/dashboard');
-    } else {
-      alert('بيانات الاعتماد غير صحيحة. يرجى استخدام بيانات الاعتماد التجريبية المقدمة.');
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      const response = await authService.login({ email, password });
+      
+      if (response.success) {
+        setIsLoggedIn(true);
+        setUserRole(response.user.role);
+        setUserEmail(response.user.email);
+        setUserId(response.user.id);
+        setCurrentRoute('/dashboard');
+      }
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد.';
+      alert(message);
+      console.error('Login failed:', error);
     }
   };
 
-  const handleRegister = (email: string, password: string, name: string, studentId: string) => {
-    // Simulate registration - in real app, this would call an API
-    alert(`تم التسجيل بنجاح! مرحباً ${name}`);
-    
-    // Auto login as member after registration
-    setIsLoggedIn(true);
-    setUserRole('member');
-    setUserEmail(email);
-    setCurrentRoute('/dashboard');
+  const handleRegister = async (email: string, password: string, name: string, studentId: string) => {
+    try {
+      const response = await authService.register({
+        name,
+        email,
+        password,
+        studentId,
+        department: 'none',
+      });
+      
+      if (response.success) {
+        alert(`تم التسجيل بنجاح! مرحباً ${name}`);
+        setIsLoggedIn(true);
+        setUserRole(response.user.role);
+        setUserEmail(response.user.email);
+        setCurrentRoute('/dashboard');
+      }
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'فشل التسجيل. يرجى المحاولة مرة أخرى.';
+      alert(message);
+      console.error('Registration failed:', error);
+    }
   };
 
   const handleLogout = () => {
+    authService.logout();
     setIsLoggedIn(false);
     setUserEmail('');
+    setUserRole('user');
     setCurrentRoute('/');
   };
 
-  const handleAddEvent = (event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => {
-    const newEvent: Event = {
-      ...event,
-      id: Date.now().toString(),
-      createdBy: userEmail,
-      createdAt: new Date().toISOString(),
-      attendees: 0
-    };
-    saveEvent(newEvent);
-    setRefreshKey(prev => prev + 1);
+  const handleAddEvent = async (event: any) => {
+    try {
+      const response = await eventService.createEvent(event);
+      if (response.success) {
+        setRefreshKey(prev => prev + 1);
+        alert('تم إنشاء الفعالية بنجاح!');
+      }
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'فشل إنشاء الفعالية';
+      alert(message);
+      console.error('Failed to create event:', error);
+    }
   };
 
-  const handleEditEvent = (id: string, updatedEvent: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => {
-    saveUpdateEvent(id, updatedEvent);
-    setRefreshKey(prev => prev + 1);
+  const handleEditEvent = async (id: string, updatedEvent: any) => {
+    try {
+      const response = await eventService.updateEvent(id, updatedEvent);
+      if (response.success) {
+        setRefreshKey(prev => prev + 1);
+        alert('تم تحديث الفعالية بنجاح!');
+      }
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'فشل تحديث الفعالية';
+      alert(message);
+      console.error('Failed to update event:', error);
+    }
   };
 
-  const handleDeleteEvent = (id: string) => {
-    saveDeleteEvent(id);
-    setRefreshKey(prev => prev + 1);
+  const handleDeleteEvent = async (id: string) => {
+    try {
+      const response = await eventService.deleteEvent(id);
+      if (response.success) {
+        setRefreshKey(prev => prev + 1);
+        alert('تم حذف الفعالية بنجاح!');
+      }
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'فشل حذف الفعالية';
+      alert(message);
+      console.error('Failed to delete event:', error);
+    }
   };
 
   const handleRegisterForEvent = (eventId: string) => {
@@ -149,7 +278,26 @@ export default function App() {
     }
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Router Logic
+  
+  // If logged in and trying to access login/register, redirect to dashboard
+  if (isLoggedIn && (currentRoute === '/login' || currentRoute === '/register')) {
+    setCurrentRoute('/dashboard');
+    return null;
+  }
+
   if (currentRoute === '/register') {
     return (
       <RegisterPage
@@ -177,6 +325,7 @@ export default function App() {
       <DashboardPage
         userRole={userRole}
         userEmail={userEmail}
+        userId={userId}
         events={events}
         onLogout={handleLogout}
         onNavigateToSite={() => setCurrentRoute('/')}
@@ -196,7 +345,6 @@ export default function App() {
       isDarkMode={isDarkMode}
       events={events}
       onLanguageToggle={toggleLanguage}
-      onDarkModeToggle={toggleDarkMode}
       onLoginClick={() => setCurrentRoute(isLoggedIn ? '/dashboard' : '/login')}
       onRefreshEvents={() => setRefreshKey(prev => prev + 1)}
       userEmail={userEmail}

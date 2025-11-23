@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Calendar, MapPin, Users, X, Search, Filter, MoreVertical } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, MapPin, Users, X, Search, Filter, MoreVertical, Eye } from "lucide-react";
+import { EventRegistrationsPanel } from "./EventRegistrationsPanel";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
@@ -36,6 +37,7 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewingRegistrations, setViewingRegistrations] = useState<Event | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     date: "",
@@ -397,6 +399,10 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                             <DropdownMenuItem onClick={() => setViewingRegistrations(event)}>
+                                <Eye className="w-4 h-4 ml-2" />
+                                عرض التسجيلات
+                             </DropdownMenuItem>
                              <DropdownMenuItem onClick={() => handleEdit(event)}>
                                 <Edit className="w-4 h-4 ml-2" />
                                 تعديل
@@ -418,6 +424,19 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
         )}
         </AnimatePresence>
       </div>
+
+      {/* Registrations Modal */}
+      {viewingRegistrations && (
+        <Dialog open={!!viewingRegistrations} onOpenChange={() => setViewingRegistrations(null)}>
+          <DialogContent className="!max-w-[95vw] w-[95vw] max-h-[95vh] overflow-y-auto">
+            <EventRegistrationsPanel
+              eventId={viewingRegistrations.id}
+              eventTitle={viewingRegistrations.title}
+              onClose={() => setViewingRegistrations(null)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

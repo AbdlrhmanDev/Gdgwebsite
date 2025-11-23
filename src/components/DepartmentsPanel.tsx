@@ -1,32 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users, Target, Award, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
-import { 
-  getDepartments, 
-  getDepartmentMembers,
-  getTasksByDepartment,
-  Department,
-  DepartmentId
-} from "../lib/departments";
+import { departmentService } from "../services/departmentService";
 
 export function DepartmentsPanel() {
-  const departments = getDepartments();
-  const [selectedDept, setSelectedDept] = useState<DepartmentId | null>(null);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedDept, setSelectedDept] = useState<string | null>(null);
 
-  const getDepartmentStats = (deptId: DepartmentId) => {
-    const tasks = getTasksByDepartment(deptId);
-    const members = getDepartmentMembers(deptId);
-    
+  useEffect(() => {
+    loadDepartments();
+  }, []);
+
+  const loadDepartments = async () => {
+    try {
+      setLoading(true);
+      const response = await departmentService.getDepartments();
+      if (response.success) {
+        setDepartments(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load departments:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDepartmentStats = (dept: any) => {
     return {
-      members: members.length,
-      tasks: tasks.length,
-      completed: tasks.filter(t => t.status === 'completed').length,
-      inProgress: tasks.filter(t => t.status === 'in-progress' || t.status === 'review').length,
-      completionRate: tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'completed').length / tasks.length) * 100) : 0
+      members: dept.members?.length || 0,
+      tasks: dept.tasks?.length || 0,
+      completed: dept.achievements?.length || 0,
+      inProgress: dept.tasks?.filter((t: any) => t.status === 'in-progress').length || 0,
+      completionRate: dept.tasks?.length > 0 
+        ? Math.round(((dept.tasks.filter((t: any) => t.status === 'completed').length / dept.tasks.length) * 100))
+        : 0
     };
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -60,7 +80,7 @@ export function DepartmentsPanel() {
               </div>
               <div>
                 <p className="text-2xl">
-                  {departments.reduce((sum, d) => sum + getDepartmentStats(d.id).tasks, 0)}
+                  {departments.reduce((sum, d) => sum + getDepartmentStats(d).tasks, 0)}
                 </p>
                 <p className="text-sm text-gray-600">المهام النشطة</p>
               </div>
@@ -72,11 +92,11 @@ export function DepartmentsPanel() {
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Award className="w-6 h-6 text-purple-600" />
+                <Users className="w-6 h-6 text-purple-600" />
               </div>
               <div>
                 <p className="text-2xl">
-                  {departments.reduce((sum, d) => sum + getDepartmentMembers(d.id).length, 0)}
+                  {departments.reduce((sum, d) => sum + getDepartmentStats(d).members, 0)}
                 </p>
                 <p className="text-sm text-gray-600">إجمالي الأعضاء</p>
               </div>
@@ -92,10 +112,47 @@ export function DepartmentsPanel() {
               </div>
               <div>
                 <p className="text-2xl">
-                  {Math.round(
-                    departments.reduce((sum, d) => sum + getDepartmentStats(d.id).completionRate, 0) / 
+                  {departments.length > 0 
+                    ? Math.round(
+                        departments.reduce((sum, d) => sum + getDepartmentStats(d).completionRate, 0) / 
+                        departments.length
+                      )
+                    : 0}%
+                </p>
+                <p className="text-sm text-gray-600">معدل الإنجاز</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Award className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl">
+                  {departments.reduce((sum, d) => sum + (d.members?.length || 0), 0)}
+                </p>
+                <p className="text-sm text-gray-600">إجمالي الأعضاء</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-[#f9ab00]" />
+              </div>
+              <div>
+                <p className="text-2xl">
+                  {departments.length > 0 ? Math.round(
+                    departments.reduce((sum, d) => sum + getDepartmentStats(d).completionRate, 0) / 
                     departments.length
-                  )}%
+                  ) : 0}%
                 </p>
                 <p className="text-sm text-gray-600">معدل الإنجاز</p>
               </div>
@@ -107,13 +164,13 @@ export function DepartmentsPanel() {
       {/* Departments Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {departments.map((dept) => {
-          const stats = getDepartmentStats(dept.id);
+          const stats = getDepartmentStats(dept);
           
           return (
             <Card 
-              key={dept.id}
+              key={dept._id}
               className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => setSelectedDept(dept.id)}
+              onClick={() => setSelectedDept(dept._id)}
             >
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -126,17 +183,17 @@ export function DepartmentsPanel() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{dept.nameAr}</CardTitle>
-                      <p className="text-sm text-gray-500">{dept.nameEn}</p>
+                      <p className="text-sm text-muted-foreground">{dept.nameEn}</p>
                     </div>
                   </div>
-                  <Badge style={{ backgroundColor: dept.color }}>
+                  <Badge style={{ backgroundColor: dept.color }} className="text-white">
                     {stats.members} عضو
                   </Badge>
                 </div>
               </CardHeader>
               
               <CardContent className="space-y-4">
-                <p className="text-sm text-gray-600">{dept.description}</p>
+                <p className="text-sm text-muted-foreground">{dept.descriptionAr || dept.description}</p>
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3 text-center">

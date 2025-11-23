@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Moon, Sun, Globe } from "lucide-react";
+import { Menu, X, Globe } from "lucide-react";
 import { Button } from "./ui/button";
 import { getTranslation, type Language } from "../lib/i18n";
 import { motion, AnimatePresence } from "motion/react";
@@ -8,10 +8,9 @@ interface NavigationProps {
   currentLang: Language;
   onLanguageToggle: () => void;
   isDarkMode: boolean;
-  onDarkModeToggle: () => void;
 }
 
-export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkModeToggle }: NavigationProps) {
+export function Navigation({ currentLang, onLanguageToggle, isDarkMode }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   
@@ -30,6 +29,7 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkMo
     { name: t('nav.about'), href: "#about" },
     { name: t('nav.events'), href: "#events" },
     { name: t('nav.team'), href: "#team" },
+    { name: currentLang === 'ar' ? 'المتصدرين' : 'Leaderboard', href: "#leaderboard" },
     { name: t('nav.contact'), href: "#contact" }
   ];
 
@@ -78,22 +78,11 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkMo
             <div className="h-6 w-px bg-border mx-2" />
 
             <button
-              onClick={onDarkModeToggle}
-              className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            >
-              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-
-            <button
               onClick={onLanguageToggle}
               className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             >
               <Globe className="w-5 h-5" />
             </button>
-
-            <Button className="bg-[#4285f4] hover:bg-[#3367d6] text-white rounded-full px-6 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all hover:scale-105">
-              {t('nav.joinUs')}
-            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -128,18 +117,10 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkMo
                   {item.name}
                 </a>
               ))}
-              <div className="pt-4 flex items-center justify-between border-t border-border mt-4">
-                <div className="flex gap-4">
-                  <button onClick={onDarkModeToggle} className="p-2 hover:bg-muted rounded-full">
-                    {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                  </button>
-                  <button onClick={onLanguageToggle} className="p-2 hover:bg-muted rounded-full">
-                    <Globe className="w-5 h-5" />
-                  </button>
-                </div>
-                <Button className="bg-[#4285f4] hover:bg-[#3367d6] text-white rounded-full">
-                  {t('nav.joinUs')}
-                </Button>
+              <div className="pt-4 flex items-center justify-center border-t border-border mt-4">
+                <button onClick={onLanguageToggle} className="p-2 hover:bg-muted rounded-full">
+                  <Globe className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </motion.div>

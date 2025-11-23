@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, Users, Tag, Monitor, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { Event, EventRegistration, addRegistration, generateQRCode, isUserRegistered, getEventById, updateEvent, getEventRegistrations } from "../lib/storage";
+import { Event } from "../lib/storage";
 import { getRegistrationUrl, getRegistrationButtonText, getRegistrationMethodIcon } from "../lib/registration-methods";
+import { registrationService } from "../services/registrationService";
+import { eventService } from "../services/eventService";
 
 interface EventDetailsModalProps {
   event: Event;
@@ -19,15 +21,44 @@ interface EventDetailsModalProps {
 export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole, onRegisterSuccess }: EventDetailsModalProps) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
-  
-  const alreadyRegistered = isUserRegistered(event.id, userEmail);
-  const currentRegistrations = getEventRegistrations(event.id).length;
-  const isFull = currentRegistrations >= event.capacity;
-  const canRegister = userRole !== 'user' && !alreadyRegistered && !isFull;
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // تحديد طريقة التسجيل
   const registrationMethod = event.registrationMethod?.method || 'internal';
   const isExternalRegistration = ['google-form', 'typeform', 'microsoft-form', 'external-link', 'email'].includes(registrationMethod);
+
+  const currentRegistrations = event.attendees || 0;
+  const isFull = currentRegistrations >= event.capacity;
+  const canRegister = userRole !== 'user' && !alreadyRegistered && !isFull;
+
+  // Check if user is already registered
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (!userEmail || userRole === 'user') {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await registrationService.getMyRegistrations();
+        if (response.success) {
+          const isRegistered = response.data.some((reg: any) => 
+            reg.event?._id === event.id && reg.status !== 'cancelled'
+          );
+          setAlreadyRegistered(isRegistered);
+        }
+      } catch (error) {
+        console.error('Failed to check registration:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      checkRegistration();
+    }
+  }, [isOpen, event.id, userEmail, userRole]);
 
   const handleRegister = async () => {
     if (userRole === 'user') {
@@ -45,50 +76,40 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
       return;
     }
 
-    // التسجيل الداخلي
+    // التسجيل الداخلي عبر الـ API
     setIsRegistering(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Use 'custom' for internal registration method
+      const backendMethod = registrationMethod === 'internal' ? 'custom' : registrationMethod;
+      const response = await registrationService.registerForEvent(event.id, backendMethod);
+      
+      if (response.success) {
+        setRegistrationComplete(true);
+        setAlreadyRegistered(true);
 
-    const registration: EventRegistration = {
-      id: Date.now().toString(),
-      eventId: event.id,
-      userId: userEmail,
-      userEmail: userEmail,
-      userName: userEmail.split('@')[0], // In real app, get from user profile
-      registeredAt: new Date().toISOString(),
-      status: 'registered',
-      qrCode: generateQRCode(`${event.id}-${userEmail}`)
-    };
+        if (onRegisterSuccess) {
+          onRegisterSuccess();
+        }
 
-    addRegistration(registration);
-
-    // Update event attendees count
-    const updatedEvent = getEventById(event.id);
-    if (updatedEvent) {
-      updateEvent(event.id, { 
-        attendees: currentRegistrations + 1 
-      });
+        // Show success message
+        setTimeout(() => {
+          setRegistrationComplete(false);
+          onClose();
+        }, 2000);
+      }
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      const message = error.response?.data?.message || 'فشل التسجيل. يرجى المحاولة مرة أخرى.';
+      alert(message);
+    } finally {
+      setIsRegistering(false);
     }
-
-    setIsRegistering(false);
-    setRegistrationComplete(true);
-
-    if (onRegisterSuccess) {
-      onRegisterSuccess();
-    }
-
-    // Show success message
-    setTimeout(() => {
-      setRegistrationComplete(false);
-      onClose();
-    }, 2000);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="!max-w-[95vw] w-[95vw] max-h-[95vh] overflow-y-auto bg-card border-border">
         {registrationComplete ? (
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-[#34a853]/20 rounded-full flex items-center justify-center mx-auto mb-4">
