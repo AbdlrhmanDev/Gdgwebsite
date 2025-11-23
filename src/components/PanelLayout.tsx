@@ -1,6 +1,8 @@
-import { LogOut, Home, Calendar, BarChart, Settings, Users as UsersIcon, Trophy, User, LayoutDashboard, Eye, CheckSquare, Briefcase } from "lucide-react";
+import { LogOut, Home, Calendar, BarChart, Settings, Users as UsersIcon, Trophy, User, LayoutDashboard, Eye, CheckSquare, Briefcase, Menu, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { motion, AnimatePresence } from "motion/react";
+import { useState } from "react";
 
 interface PanelLayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,8 @@ interface PanelLayoutProps {
 }
 
 export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigateToSite, currentView, onViewChange }: PanelLayoutProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const roleColors = {
     admin: '#34a853',
     member: '#4285f4',
@@ -27,7 +31,6 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
 
   const roleColor = roleColors[userRole];
 
-  // Navigation items based on role
   const getNavItems = () => {
     const baseItems = [
       { id: 'overview', label: 'لوحة التحكم', icon: LayoutDashboard }
@@ -51,7 +54,6 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
       ];
     }
 
-    // Admin gets everything
     return [
       ...baseItems,
       { id: 'tasks', label: 'المهام', icon: CheckSquare },
@@ -67,44 +69,120 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
 
   const navItems = getNavItems();
 
+  const SidebarContent = () => (
+    <div className="space-y-6">
+       <div className="bg-card border border-border rounded-2xl p-4 shadow-sm">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">القائمة الرئيسية</h3>
+        <nav className="space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentView === item.id;
+            
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  onViewChange(item.id);
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-primary/10 text-primary font-medium shadow-sm'
+                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                <span className="text-sm">{item.label}</span>
+                {isActive && (
+                  <motion.div
+                    layoutId="activeIndicator"
+                    className="absolute right-0 w-1 h-6 bg-primary rounded-l-full"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Role Info */}
+      <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">معلومات الحساب</h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">نوع الحساب</p>
+            <Badge style={{ backgroundColor: roleColor }} className="shadow-sm">
+              {roleLabels[userRole]}
+            </Badge>
+          </div>
+          {userRole === 'user' && (
+            <div className="pt-3 border-t border-border">
+              <p className="text-xs text-muted-foreground mb-3">
+                للحصول على مزايا إضافية:
+              </p>
+              <Button size="sm" className="w-full bg-[#4285f4] hover:bg-[#3367d6] shadow-md shadow-blue-500/20">
+                ترقية إلى عضو
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-[#0a0a0a] text-foreground" dir="rtl">
       {/* Top Navigation */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <nav className="bg-card/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="flex">
-                  <span className="w-3 h-3 rounded-full bg-[#4285f4]"></span>
-                  <span className="w-3 h-3 rounded-full bg-[#34a853] -mr-1"></span>
-                  <span className="w-3 h-3 rounded-full bg-[#f9ab00] -mr-1"></span>
-                  <span className="w-3 h-3 rounded-full bg-[#ea4335] -mr-1"></span>
+              <button 
+                className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex space-x-1 rtl:space-x-reverse">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#4285f4] animate-pulse"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#34a853] animate-pulse delay-75"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#f9ab00] animate-pulse delay-150"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#ea4335] animate-pulse delay-200"></span>
                 </div>
-                <span className="text-lg">لوحة التحكم GDG</span>
+                <span className="text-lg font-semibold hidden sm:block">لوحة التحكم GDG</span>
               </div>
-              <Badge style={{ backgroundColor: roleColor }}>
-                {roleLabels[userRole]}
-              </Badge>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 ml-2">{userEmail}</span>
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex flex-col items-end mr-2">
+                 <span className="text-sm font-medium">{userEmail}</span>
+                 <span className="text-xs text-muted-foreground">{roleLabels[userRole]}</span>
+              </div>
+              
+              <div className="h-8 w-px bg-border mx-1 hidden md:block" />
+
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={onNavigateToSite}
+                className="text-muted-foreground hover:text-foreground"
               >
                 <Home className="w-4 h-4 ml-2" />
-                عرض الموقع
+                <span className="hidden sm:inline">الموقع</span>
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={onLogout}
+                className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
               >
                 <LogOut className="w-4 h-4 ml-2" />
-                تسجيل خروج
+                <span className="hidden sm:inline">خروج</span>
               </Button>
             </div>
           </div>
@@ -113,84 +191,48 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
-          <aside className="lg:col-span-1 space-y-2">
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-sm text-gray-500 mb-3">القائمة</h3>
-              <nav className="space-y-1">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = currentView === item.id;
-                  
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => onViewChange(item.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                        isActive 
-                          ? 'bg-[#4285f4] bg-opacity-10 text-[#4285f4]'
-                          : 'hover:bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span className="text-sm">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-
-            {/* Role Info */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <h3 className="text-sm text-gray-500 mb-3">معلومات الحساب</h3>
-              <div className="space-y-2">
-                <div>
-                  <p className="text-xs text-gray-600">نوع الحساب</p>
-                  <p className="text-sm">{roleLabels[userRole]}</p>
-                </div>
-                {userRole === 'user' && (
-                  <div className="pt-2 border-t">
-                    <p className="text-xs text-gray-600 mb-2">
-                      للحصول على مزايا إضافية:
-                    </p>
-                    <Button size="sm" className="w-full bg-[#4285f4]">
-                      ترقية إلى عضو
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Quick Stats */}
-            {(userRole === 'member' || userRole === 'admin') && (
-              <div className="bg-white rounded-lg border border-gray-200 p-4">
-                <h3 className="text-sm text-gray-500 mb-3">إحصائيات سريعة</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-2xl">12</p>
-                    <p className="text-xs text-gray-600">إجمالي الفعاليات</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl">3</p>
-                    <p className="text-xs text-gray-600">القادمة</p>
-                  </div>
-                  {userRole === 'admin' && (
-                    <div>
-                      <p className="text-2xl">500+</p>
-                      <p className="text-xs text-gray-600">الأعضاء</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Desktop Sidebar */}
+          <aside className="hidden lg:block lg:col-span-1">
+            <SidebarContent />
           </aside>
+
+          {/* Mobile Sidebar */}
+          <AnimatePresence>
+            {isMobileMenuOpen && (
+              <>
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+                <motion.div
+                    initial={{ x: 300 }}
+                    animate={{ x: 0 }}
+                    exit={{ x: 300 }}
+                    className="fixed top-16 right-0 bottom-0 w-3/4 max-w-xs bg-card border-l border-border z-50 lg:hidden overflow-y-auto p-4"
+                >
+                    <SidebarContent />
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
 
           {/* Main Content Area */}
           <main className="lg:col-span-3">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              {children}
-            </div>
+            <motion.div
+              key={currentView}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-sm min-h-[calc(100vh-8rem)] relative overflow-hidden"
+            >
+               {/* Subtle Background Decoration */}
+               <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-r from-[#4285f4] via-[#34a853] to-[#f9ab00] opacity-50" />
+               {children}
+            </motion.div>
           </main>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Calendar, MapPin, Users, X } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, MapPin, Users, X, Search, Filter, MoreVertical } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
@@ -10,11 +10,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription
 } from "./ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import { Label } from "./ui/label";
 import { RegistrationMethodSelector } from "./RegistrationMethodSelector";
 import { RegistrationConfig, internalRegistration } from "../lib/registration-methods";
 import { Event } from "../lib/storage";
+import { motion, AnimatePresence } from "motion/react";
 
 interface AdminPanelProps {
   events: Event[];
@@ -27,6 +35,7 @@ interface AdminPanelProps {
 export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isAdmin }: AdminPanelProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     date: "",
@@ -51,6 +60,11 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     { value: "#ea4335", label: "أحمر" }
   ];
 
+  const filteredEvents = events.filter(event => 
+    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -65,24 +79,7 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
       onAddEvent(eventData);
     }
 
-    // Reset form
-    setFormData({
-      title: "",
-      date: "",
-      time: "",
-      location: "",
-      capacity: "50",
-      image: "",
-      status: "قريباً",
-      color: "#4285f4",
-      description: "",
-      tags: [] as string[],
-      isOnline: false,
-      meetingLink: "",
-      requirements: "",
-      registrationMethod: internalRegistration as RegistrationConfig
-    });
-    setEditingEvent(null);
+    resetForm();
     setIsDialogOpen(false);
   };
 
@@ -134,12 +131,14 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl">لوحة {isAdmin ? "المدير" : "العضو"}</h2>
-          <p className="text-gray-600 mt-1">إدارة فعاليات GDG</p>
+          <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
+            لوحة {isAdmin ? "المدير" : "العضو"}
+          </h2>
+          <p className="text-muted-foreground mt-1">إدارة وتنظيم فعاليات مجتمع GDG</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -147,140 +146,155 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className="bg-[#4285f4] hover:bg-[#3367d6]">
+            <Button className="bg-[#4285f4] hover:bg-[#3367d6] shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
               <Plus className="w-4 h-4 ml-2" />
               إضافة فعالية
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
             <DialogHeader>
               <DialogTitle>{editingEvent ? "تعديل الفعالية" : "إضافة فعالية جديدة"}</DialogTitle>
+              <DialogDescription>
+                قم بتعبئة البيانات أدناه {editingEvent ? "لتحديث" : "لإنشاء"} الفعالية
+              </DialogDescription>
             </DialogHeader>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="title">عنوان الفعالية</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="ورشة تطوير Android"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-6 py-4">
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="date">التاريخ</Label>
+                  <Label htmlFor="title">عنوان الفعالية</Label>
                   <Input
-                    id="date"
-                    type="text"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    placeholder="25 نوفمبر 2025"
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="ورشة تطوير Android"
                     required
+                    className="bg-muted/50"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="date">التاريخ</Label>
+                    <Input
+                      id="date"
+                      type="text"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      placeholder="25 نوفمبر 2025"
+                      required
+                      className="bg-muted/50"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="time">الوقت</Label>
+                    <Input
+                      id="time"
+                      value={formData.time}
+                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                      placeholder="2:00 م - 5:00 م"
+                      required
+                      className="bg-muted/50"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="time">الوقت</Label>
+                  <Label htmlFor="location">الموقع</Label>
                   <Input
-                    id="time"
-                    value={formData.time}
-                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                    placeholder="2:00 م - 5:00 م"
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="قاعة الهندسة، غرفة 301"
                     required
+                    className="bg-muted/50"
                   />
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="location">الموقع</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="قاعة الهندسة، غرفة 301"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="capacity">السعة المتاحة</Label>
-                <Input
-                  id="capacity"
-                  type="number"
-                  value={formData.capacity}
-                  onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                  placeholder="100"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="image">رابط الصورة</Label>
-                <Input
-                  id="image"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  placeholder="https://images.unsplash.com/..."
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="description">الوصف</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="وصف الفعالية..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="status">الحالة</Label>
-                  <select
-                    id="status"
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  <Label htmlFor="capacity">السعة المتاحة</Label>
+                  <Input
+                    id="capacity"
+                    type="number"
+                    value={formData.capacity}
+                    onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                    placeholder="100"
                     required
-                  >
-                    <option value="قريباً">قريباً</option>
-                    <option value="التسجيل مفتوح">التسجيل مفتوح</option>
-                    <option value="اكتمل العدد">اكتمل العدد</option>
-                    <option value="انتهت">انتهت</option>
-                  </select>
+                    className="bg-muted/50"
+                  />
                 </div>
+
                 <div>
-                  <Label htmlFor="color">اللون الرئيسي</Label>
-                  <select
-                    id="color"
-                    value={formData.color}
-                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  <Label htmlFor="image">رابط الصورة</Label>
+                  <Input
+                    id="image"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    placeholder="https://images.unsplash.com/..."
                     required
-                  >
-                    {colors.map((color) => (
-                      <option key={color.value} value={color.value}>
-                        {color.label}
-                      </option>
-                    ))}
-                  </select>
+                    className="bg-muted/50"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="description">الوصف</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="وصف الفعالية..."
+                    rows={3}
+                    className="bg-muted/50"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="status">الحالة</Label>
+                    <select
+                      id="status"
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="w-full px-3 py-2 bg-muted/50 border border-input rounded-md text-sm"
+                      required
+                    >
+                      <option value="قريباً">قريباً</option>
+                      <option value="التسجيل مفتوح">التسجيل مفتوح</option>
+                      <option value="اكتمل العدد">اكتمل العدد</option>
+                      <option value="انتهت">انتهت</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor="color">اللون الرئيسي</Label>
+                    <select
+                      id="color"
+                      value={formData.color}
+                      onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                      className="w-full px-3 py-2 bg-muted/50 border border-input rounded-md text-sm"
+                      required
+                    >
+                      {colors.map((color) => (
+                        <option key={color.value} value={color.value}>
+                          {color.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Registration Method */}
+                <div className="border-t border-border pt-4">
+                  <Label className="mb-2 block">طريقة التسجيل</Label>
+                  <div className="bg-muted/30 p-4 rounded-xl border border-border">
+                      <RegistrationMethodSelector
+                        value={formData.registrationMethod}
+                        onChange={(config) => setFormData({ ...formData, registrationMethod: config })}
+                      />
+                  </div>
                 </div>
               </div>
 
-              {/* قسم طريقة التسجيل */}
-              <div className="border-t pt-4">
-                <RegistrationMethodSelector
-                  value={formData.registrationMethod}
-                  onChange={(config) => setFormData({ ...formData, registrationMethod: config })}
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
                 <Button
                   type="button"
                   variant="outline"
@@ -300,77 +314,109 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
         </Dialog>
       </div>
 
+      {/* Search and Filter Bar */}
+      <div className="flex items-center gap-4 bg-card border border-border p-4 rounded-xl">
+         <div className="relative flex-1">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+                placeholder="ابحث عن فعالية..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-muted/50 border-transparent focus:border-primary pr-10"
+            />
+         </div>
+         <Button variant="outline" size="icon">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+         </Button>
+      </div>
+
       {/* Events List */}
       <div className="grid gap-4">
-        {events.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg">
-            <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-600">لا توجد فعاليات بعد. أضف أول فعالية!</p>
-          </div>
+        <AnimatePresence mode="popLayout">
+        {filteredEvents.length === 0 ? (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }}
+            className="text-center py-16 bg-card/50 border border-dashed border-border rounded-2xl"
+          >
+            <Calendar className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+            <h3 className="text-lg font-medium">لا توجد فعاليات</h3>
+            <p className="text-muted-foreground">لم يتم العثور على فعاليات تطابق بحثك</p>
+          </motion.div>
         ) : (
-          events.map((event) => (
-            <div
+          filteredEvents.map((event, index) => (
+            <motion.div
               key={event.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ delay: index * 0.05 }}
+              className="group bg-card border border-border/50 rounded-2xl p-4 hover:shadow-lg hover:border-border transition-all duration-300"
             >
-              <div className="flex gap-4">
-                <img
-                  src={event.image}
-                  alt={event.title}
-                  className="w-24 h-24 rounded-lg object-cover flex-shrink-0"
-                />
+              <div className="flex flex-col sm:flex-row gap-5">
+                <div className="relative w-full sm:w-32 h-32 rounded-xl overflow-hidden flex-shrink-0">
+                    <img
+                    src={event.image}
+                    alt={event.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
+                </div>
                 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg">{event.title}</h3>
-                        <Badge style={{ backgroundColor: event.color }}>
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <h3 className="text-xl font-bold group-hover:text-primary transition-colors">{event.title}</h3>
+                        <Badge style={{ backgroundColor: event.color }} className="shadow-sm">
                           {event.status}
                         </Badge>
                       </div>
                       
-                      <div className="space-y-1 text-sm text-gray-600">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" style={{ color: event.color }} />
+                          <Calendar className="w-4 h-4 text-primary" />
                           <span>{event.date} • {event.time}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4" style={{ color: event.color }} />
+                          <MapPin className="w-4 h-4 text-primary" />
                           <span>{event.location}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4" style={{ color: event.color }} />
+                          <Users className="w-4 h-4 text-primary" />
                           <span>{event.capacity} مقعد متاح</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEdit(event)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      {isAdmin && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(event.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
+                    <div className="flex flex-col sm:flex-row gap-2">
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                             <DropdownMenuItem onClick={() => handleEdit(event)}>
+                                <Edit className="w-4 h-4 ml-2" />
+                                تعديل
+                             </DropdownMenuItem>
+                             {isAdmin && (
+                                <DropdownMenuItem onClick={() => handleDelete(event.id)} className="text-red-500 focus:text-red-500">
+                                    <Trash2 className="w-4 h-4 ml-2" />
+                                    حذف
+                                </DropdownMenuItem>
+                             )}
+                          </DropdownMenuContent>
+                       </DropdownMenu>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))
         )}
+        </AnimatePresence>
       </div>
     </div>
   );

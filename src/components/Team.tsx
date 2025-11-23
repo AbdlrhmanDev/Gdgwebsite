@@ -1,6 +1,14 @@
 import { Linkedin, Github, Mail } from "lucide-react";
+import { motion } from "motion/react";
+import { getTranslation, type Language } from "../lib/i18n";
 
-export function Team() {
+interface TeamProps {
+  lang: Language;
+}
+
+export function Team({ lang }: TeamProps) {
+  const t = (key: string) => getTranslation(lang, key);
+
   const team = [
     {
       name: "Sarah Al-Rashid",
@@ -41,68 +49,98 @@ export function Team() {
   ];
 
   return (
-    <div className="bg-white py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl md:text-5xl">Meet Our Team</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Passionate students leading the way to create an amazing developer community
-          </p>
+    <div className="bg-background py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+       {/* Background Decoration */}
+       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="text-center mb-20 space-y-4">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-bold"
+          >
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#4285f4] via-[#ea4335] to-[#f9ab00]">
+               {lang === 'ar' ? 'فريقنا' : 'Meet Our Team'}
+            </span>
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-xl text-muted-foreground max-w-2xl mx-auto"
+          >
+            {lang === 'ar'
+              ? 'طلاب شغوفون يقودون الطريق لبناء مجتمع مطورين رائع'
+              : 'Passionate students leading the way to create an amazing developer community'}
+          </motion.p>
         </div>
 
-        {/* Team Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
           {team.map((member, index) => (
-            <div
+            <motion.div
               key={index}
-              className="bg-white border border-gray-200 rounded-2xl p-8 text-center hover:shadow-lg transition-shadow"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className="group bg-card border border-border rounded-[2rem] p-8 text-center hover:shadow-2xl hover:shadow-black/5 transition-all duration-300 hover:-translate-y-2"
             >
-              <div
-                className="w-24 h-24 mx-auto rounded-full flex items-center justify-center text-white text-3xl mb-4"
-                style={{ backgroundColor: member.color }}
-              >
-                {member.initial}
+              <div className="relative w-28 h-28 mx-auto mb-6">
+                <div 
+                  className="absolute inset-0 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition-opacity"
+                  style={{ backgroundColor: member.color }}
+                />
+                <div
+                  className="relative w-full h-full rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-lg group-hover:scale-105 transition-transform duration-500"
+                  style={{ backgroundColor: member.color }}
+                >
+                  {member.initial}
+                </div>
               </div>
 
-              <h3 className="text-xl mb-1">{member.name}</h3>
-              <p className="text-gray-600 mb-4">{member.role}</p>
+              <h3 className="text-2xl font-bold mb-1 group-hover:text-primary transition-colors">{member.name}</h3>
+              <p className="text-muted-foreground font-medium mb-6">{member.role}</p>
 
-              <div className="flex justify-center gap-3">
-                <button
-                  className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                  aria-label="LinkedIn"
-                >
-                  <Linkedin className="w-4 h-4 text-gray-600" />
-                </button>
-                <button
-                  className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                  aria-label="GitHub"
-                >
-                  <Github className="w-4 h-4 text-gray-600" />
-                </button>
-                <button
-                  className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                  aria-label="Email"
-                >
-                  <Mail className="w-4 h-4 text-gray-600" />
-                </button>
+              <div className="flex justify-center gap-4">
+                {[Linkedin, Github, Mail].map((Icon, i) => (
+                  <button
+                    key={i}
+                    className="w-10 h-10 rounded-full bg-muted hover:bg-foreground/5 text-muted-foreground hover:text-foreground flex items-center justify-center transition-all hover:scale-110"
+                  >
+                    <Icon className="w-5 h-5" />
+                  </button>
+                ))}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
-        {/* Join Team CTA */}
-        <div className="mt-16 text-center bg-[#f8f9fa] rounded-3xl p-8 md:p-12">
-          <h3 className="text-3xl mb-4">Want to join our team?</h3>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto">
-            We're always looking for passionate students to help organize events and 
-            grow our community. Applications open at the start of each semester.
-          </p>
-          <button className="px-8 py-3 bg-[#4285f4] hover:bg-[#3367d6] text-white rounded-lg transition-colors">
-            Apply Now
-          </button>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-gradient-to-br from-card to-muted rounded-[2.5rem] border border-border p-12 text-center relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-red-500/10 rounded-full blur-3xl" />
+          
+          <div className="relative z-10 max-w-2xl mx-auto">
+             <h3 className="text-3xl font-bold mb-4">
+               {lang === 'ar' ? 'هل تريد الانضمام لفريقنا؟' : 'Want to join our team?'}
+             </h3>
+             <p className="text-lg text-muted-foreground mb-8">
+               {lang === 'ar'
+                 ? 'نحن نبحث دائماً عن طلاب شغوفين للمساعدة في تنظيم الفعاليات وتنمية مجتمعنا. يفتح باب التقديم في بداية كل فصل دراسي.'
+                 : "We're always looking for passionate students to help organize events and grow our community. Applications open at the start of each semester."}
+             </p>
+             <button className="px-8 py-4 bg-foreground text-background rounded-full font-medium hover:opacity-90 transition-all hover:scale-105 shadow-lg">
+               {lang === 'ar' ? 'قدم الآن' : 'Apply Now'}
+             </button>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

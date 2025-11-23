@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { X, Calendar, Clock, MapPin, Users, Tag, Monitor, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Tag, Monitor, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Event, EventRegistration, addRegistration, generateQRCode, isUserRegistered, getEventById, updateEvent, getEventRegistrations } from "../lib/storage";
 import { getRegistrationUrl, getRegistrationButtonText, getRegistrationMethodIcon } from "../lib/registration-methods";
@@ -88,14 +88,14 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border">
         {registrationComplete ? (
           <div className="text-center py-12">
-            <div className="w-20 h-20 bg-[#34a853] bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 bg-[#34a853]/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10 text-[#34a853]" />
             </div>
-            <h3 className="text-2xl mb-2">تم التسجيل بنجاح! 🎉</h3>
-            <p className="text-gray-600">
+            <h3 className="text-2xl mb-2 text-foreground">تم التسجيل بنجاح! 🎉</h3>
+            <p className="text-muted-foreground">
               تم تسجيلك في الفعالية. ستصلك رسالة تأكيد على البريد الإلكتروني.
             </p>
           </div>
@@ -115,51 +115,54 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
                   {event.status}
                 </Badge>
               </div>
-              <DialogTitle className="text-2xl">{event.title}</DialogTitle>
+              <DialogTitle className="text-2xl text-foreground">{event.title}</DialogTitle>
+              <DialogDescription className="sr-only">
+                 تفاصيل فعالية {event.title} - {event.date}
+              </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-6">
               {/* Event Info */}
               <div className="grid sm:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                  <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">التاريخ</p>
-                    <p>{event.date}</p>
+                    <p className="text-sm text-muted-foreground">التاريخ</p>
+                    <p className="font-medium text-foreground">{event.date}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                  <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">الوقت</p>
-                    <p>{event.time}</p>
+                    <p className="text-sm text-muted-foreground">الوقت</p>
+                    <p className="font-medium text-foreground">{event.time}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                  <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">الموقع</p>
-                    <p>{event.location}</p>
+                    <p className="text-sm text-muted-foreground">الموقع</p>
+                    <p className="font-medium text-foreground">{event.location}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <Users className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                  <Users className="w-5 h-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">المقاعد</p>
-                    <p>{currentRegistrations} / {event.capacity}</p>
+                    <p className="text-sm text-muted-foreground">المقاعد</p>
+                    <p className="font-medium text-foreground">{currentRegistrations} / {event.capacity}</p>
                   </div>
                 </div>
               </div>
 
               {/* Online Meeting Link */}
               {event.isOnline && event.meetingLink && (
-                <div className="p-4 bg-[#4285f4] bg-opacity-10 rounded-lg flex items-center gap-3">
+                <div className="p-4 bg-[#4285f4]/10 rounded-lg flex items-center gap-3 border border-[#4285f4]/20">
                   <Monitor className="w-5 h-5 text-[#4285f4]" />
                   <div className="flex-1">
-                    <p className="text-sm mb-1">فعالية عبر الإنترنت</p>
+                    <p className="text-sm mb-1 font-medium text-[#4285f4]">فعالية عبر الإنترنت</p>
                     <a 
                       href={event.meetingLink}
                       target="_blank"
@@ -174,28 +177,28 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
 
               {/* Description */}
               <div>
-                <h4 className="text-lg mb-2">وصف الفعالية</h4>
-                <p className="text-gray-700 leading-relaxed">{event.description}</p>
+                <h4 className="text-lg font-semibold mb-2 text-foreground">وصف الفعالية</h4>
+                <p className="text-muted-foreground leading-relaxed">{event.description}</p>
               </div>
 
               {/* Requirements */}
               {event.requirements && (
                 <div>
-                  <h4 className="text-lg mb-2">المتطلبات</h4>
-                  <p className="text-gray-700">{event.requirements}</p>
+                  <h4 className="text-lg font-semibold mb-2 text-foreground">المتطلبات</h4>
+                  <p className="text-muted-foreground">{event.requirements}</p>
                 </div>
               )}
 
               {/* Tags */}
               {event.tags && event.tags.length > 0 && (
                 <div>
-                  <h4 className="text-lg mb-2 flex items-center gap-2">
+                  <h4 className="text-lg font-semibold mb-2 flex items-center gap-2 text-foreground">
                     <Tag className="w-4 h-4" />
                     الموضوعات
                   </h4>
                   <div className="flex flex-wrap gap-2">
                     {event.tags.map((tag, index) => (
-                      <Badge key={index} variant="outline">
+                      <Badge key={index} variant="outline" className="bg-muted/50">
                         {tag}
                       </Badge>
                     ))}
@@ -205,14 +208,14 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
 
               {/* Registration Method Info */}
               {event.registrationMethod && registrationMethod !== 'internal' && (
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
                   <div className="flex items-start gap-3">
                     <div className="text-2xl">{getRegistrationMethodIcon(registrationMethod)}</div>
                     <div className="flex-1">
-                      <p className="font-medium text-blue-800 mb-1">
+                      <p className="font-medium text-blue-500 mb-1">
                         طريقة التسجيل: {getRegistrationButtonText(registrationMethod, 'ar')}
                       </p>
-                      <p className="text-sm text-blue-700 mb-3">
+                      <p className="text-sm text-blue-400 mb-3">
                         {registrationMethod === 'google-form' && 'سيتم فتح نموذج Google Forms في نافذة جديدة'}
                         {registrationMethod === 'typeform' && 'سيتم فتح نموذج Typeform التفاعلي'}
                         {registrationMethod === 'external-link' && 'سيتم توجيهك لصفحة التسجيل الخارجية'}
@@ -220,7 +223,7 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
                       </p>
                       {event.registrationMethod.url && (
                         <div className="flex items-center gap-2">
-                          <code className="text-xs px-2 py-1 bg-white rounded border flex-1 truncate" dir="ltr">
+                          <code className="text-xs px-2 py-1 bg-black/20 rounded border border-white/10 flex-1 truncate text-muted-foreground" dir="ltr">
                             {event.registrationMethod.url}
                           </code>
                           <Button
@@ -239,35 +242,35 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
 
               {/* Registration Status Messages */}
               {alreadyRegistered && (
-                <div className="p-4 bg-[#34a853] bg-opacity-10 rounded-lg flex items-center gap-3">
+                <div className="p-4 bg-[#34a853]/10 rounded-lg flex items-center gap-3 border border-[#34a853]/20">
                   <CheckCircle className="w-5 h-5 text-[#34a853]" />
-                  <p className="text-[#34a853]">أنت مسجل بالفعل في هذه الفعالية</p>
+                  <p className="text-[#34a853] font-medium">أنت مسجل بالفعل في هذه الفعالية</p>
                 </div>
               )}
 
               {isFull && !alreadyRegistered && (
-                <div className="p-4 bg-[#ea4335] bg-opacity-10 rounded-lg flex items-center gap-3">
+                <div className="p-4 bg-[#ea4335]/10 rounded-lg flex items-center gap-3 border border-[#ea4335]/20">
                   <AlertCircle className="w-5 h-5 text-[#ea4335]" />
-                  <p className="text-[#ea4335]">عذراً، اكتمل العدد المسموح للفعالية</p>
+                  <p className="text-[#ea4335] font-medium">عذراً، اكتمل العدد المسموح للفعالية</p>
                 </div>
               )}
 
               {userRole === 'user' && !alreadyRegistered && (
-                <div className="p-4 bg-[#f9ab00] bg-opacity-10 rounded-lg flex items-center gap-3">
+                <div className="p-4 bg-[#f9ab00]/10 rounded-lg flex items-center gap-3 border border-[#f9ab00]/20">
                   <AlertCircle className="w-5 h-5 text-[#f9ab00]" />
                   <div>
-                    <p className="text-[#f9ab00] mb-1">يجب أن تكون عضواً للتسجيل</p>
-                    <p className="text-sm text-gray-600">سجل كعضو للاستفادة من جميع المزايا</p>
+                    <p className="text-[#f9ab00] mb-1 font-medium">يجب أن تكون عضواً للتسجيل</p>
+                    <p className="text-sm text-muted-foreground">سجل كعضو للاستفادة من جميع المزايا</p>
                   </div>
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t">
+              <div className="flex gap-3 pt-4 border-t border-border">
                 <Button
                   variant="outline"
                   onClick={onClose}
-                  className="flex-1"
+                  className="flex-1 hover:bg-muted"
                 >
                   إغلاق
                 </Button>
@@ -275,7 +278,7 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
                   <Button
                     onClick={handleRegister}
                     disabled={isRegistering}
-                    className="flex-1"
+                    className="flex-1 text-white"
                     style={{ backgroundColor: event.color }}
                   >
                     {isRegistering ? 'جاري التسجيل...' : 'سجل الآن'}

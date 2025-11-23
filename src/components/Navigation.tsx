@@ -1,9 +1,8 @@
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, X, Moon, Sun, Globe } from "lucide-react";
 import { Button } from "./ui/button";
-import { LanguageToggle } from "./LanguageToggle";
-import { DarkModeToggle } from "./DarkModeToggle";
 import { getTranslation, type Language } from "../lib/i18n";
+import { motion, AnimatePresence } from "motion/react";
 
 interface NavigationProps {
   currentLang: Language;
@@ -14,8 +13,17 @@ interface NavigationProps {
 
 export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkModeToggle }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   
   const t = (key: string) => getTranslation(currentLang, key);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const navItems = [
     { name: t('nav.home'), href: "#home" },
@@ -26,18 +34,30 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkMo
   ];
 
   return (
-    <nav className={`border-b sticky top-0 z-50 ${isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
+    <motion.nav 
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
+        scrolled 
+          ? "bg-background/80 backdrop-blur-md border-border shadow-sm" 
+          : "bg-transparent border-transparent"
+      }`}
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="flex">
-              <span className="w-3 h-3 rounded-full bg-[#4285f4]"></span>
-              <span className={`w-3 h-3 rounded-full bg-[#34a853] ${currentLang === 'ar' ? '-mr-1' : '-ml-1'}`}></span>
-              <span className={`w-3 h-3 rounded-full bg-[#f9ab00] ${currentLang === 'ar' ? '-mr-1' : '-ml-1'}`}></span>
-              <span className={`w-3 h-3 rounded-full bg-[#ea4335] ${currentLang === 'ar' ? '-mr-1' : '-ml-1'}`}></span>
+          <div className="flex items-center gap-2 cursor-pointer group">
+            <div className="flex items-center relative">
+              <div className="absolute inset-0 bg-primary/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="flex relative z-10">
+                <span className="w-3 h-3 rounded-full bg-[#4285f4] animate-bounce [animation-delay:0s]"></span>
+                <span className={`w-3 h-3 rounded-full bg-[#34a853] animate-bounce [animation-delay:0.1s] ${currentLang === 'ar' ? '-mr-1' : '-ml-1'}`}></span>
+                <span className={`w-3 h-3 rounded-full bg-[#f9ab00] animate-bounce [animation-delay:0.2s] ${currentLang === 'ar' ? '-mr-1' : '-ml-1'}`}></span>
+                <span className={`w-3 h-3 rounded-full bg-[#ea4335] animate-bounce [animation-delay:0.3s] ${currentLang === 'ar' ? '-mr-1' : '-ml-1'}`}></span>
+              </div>
             </div>
-            <span className={`text-lg ${isDarkMode ? 'text-white' : ''}`}>
+            <span className="text-lg font-medium bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 group-hover:to-primary transition-all">
               {currentLang === 'ar' ? 'GDG المستقبل' : 'GDG Mustaqbal'}
             </span>
           </div>
@@ -48,55 +68,83 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkMo
               <a
                 key={item.name}
                 href={item.href}
-                className={`transition-colors ${isDarkMode ? 'text-gray-300 hover:text-[#4285f4]' : 'text-gray-700 hover:text-[#4285f4]'}`}
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative group"
               >
                 {item.name}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#4285f4] group-hover:w-full transition-all duration-300"></span>
               </a>
             ))}
-            <DarkModeToggle isDark={isDarkMode} onToggle={onDarkModeToggle} />
-            <LanguageToggle currentLang={currentLang} onToggle={onLanguageToggle} />
-            <Button className="bg-[#4285f4] hover:bg-[#3367d6]">
+            
+            <div className="h-6 w-px bg-border mx-2" />
+
+            <button
+              onClick={onDarkModeToggle}
+              className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            >
+              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+
+            <button
+              onClick={onLanguageToggle}
+              className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            >
+              <Globe className="w-5 h-5" />
+            </button>
+
+            <Button className="bg-[#4285f4] hover:bg-[#3367d6] text-white rounded-full px-6 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all hover:scale-105">
               {t('nav.joinUs')}
             </Button>
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-2">
-            <DarkModeToggle isDark={isDarkMode} onToggle={onDarkModeToggle} />
-            <LanguageToggle currentLang={currentLang} onToggle={onLanguageToggle} />
             <button
-              className="p-2"
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
               onClick={() => setIsOpen(!isOpen)}
-              aria-label="Toggle menu"
             >
-              {isOpen ? (
-                <X className={`w-6 h-6 ${isDarkMode ? 'text-white' : ''}`} />
-              ) : (
-                <Menu className={`w-6 h-6 ${isDarkMode ? 'text-white' : ''}`} />
-              )}
+              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        {isOpen && (
-          <div className="md:hidden py-4 space-y-4">
-            {navItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className={`block transition-colors ${isDarkMode ? 'text-gray-300 hover:text-[#4285f4]' : 'text-gray-700 hover:text-[#4285f4]'}`}
-                onClick={() => setIsOpen(false)}
-              >
-                {item.name}
-              </a>
-            ))}
-            <Button className="w-full bg-[#4285f4] hover:bg-[#3367d6]">
-              {t('nav.joinUs')}
-            </Button>
-          </div>
-        )}
       </div>
-    </nav>
+
+      {/* Mobile Navigation */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden border-t border-border bg-background/95 backdrop-blur-md overflow-hidden"
+          >
+            <div className="px-4 py-6 space-y-4">
+              {navItems.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className="block text-lg font-medium text-foreground hover:text-[#4285f4] transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {item.name}
+                </a>
+              ))}
+              <div className="pt-4 flex items-center justify-between border-t border-border mt-4">
+                <div className="flex gap-4">
+                  <button onClick={onDarkModeToggle} className="p-2 hover:bg-muted rounded-full">
+                    {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  </button>
+                  <button onClick={onLanguageToggle} className="p-2 hover:bg-muted rounded-full">
+                    <Globe className="w-5 h-5" />
+                  </button>
+                </div>
+                <Button className="bg-[#4285f4] hover:bg-[#3367d6] text-white rounded-full">
+                  {t('nav.joinUs')}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.nav>
   );
 }

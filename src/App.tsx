@@ -1,45 +1,27 @@
 import { useState, useEffect } from "react";
-import { Navigation } from "./components/Navigation";
-import { Hero } from "./components/Hero";
-import { About } from "./components/About";
-import { Events } from "./components/Events";
-import { Team } from "./components/Team";
-import { Contact } from "./components/Contact";
-import { Footer } from "./components/Footer";
-import { Login } from "./components/Login";
-import { Register } from "./components/Register";
-import { AdminPanel } from "./components/AdminPanel";
-import { PanelLayout } from "./components/PanelLayout";
-import { GamificationDashboard } from "./components/GamificationDashboard";
-import { AnalyticsDashboard } from "./components/AnalyticsDashboard";
-import { MemberProfile } from "./components/MemberProfile";
-import { DashboardOverview } from "./components/DashboardOverview";
-import { SettingsPanel } from "./components/SettingsPanel";
-import { UserDashboard } from "./components/UserDashboard";
-import { MyEventsPanel } from "./components/MyEventsPanel";
-import { TasksPanel } from "./components/TasksPanel";
-import { DepartmentsPanel } from "./components/DepartmentsPanel";
-import { CreateTaskModal } from "./components/CreateTaskModal";
-import { LanguageToggle } from "./components/LanguageToggle";
-import { DarkModeToggle } from "./components/DarkModeToggle";
 import { getTranslation, type Language } from "./lib/i18n";
 import { Event, getEvents, addEvent as saveEvent, updateEvent as saveUpdateEvent, deleteEvent as saveDeleteEvent, initializeDefaultData } from "./lib/storage";
 import { initializeDepartmentsData } from "./lib/departments";
 
-type UserRole = 'admin' | 'member' | 'user';
-type DashboardView = 'overview' | 'events' | 'analytics' | 'profile' | 'gamification' | 'members' | 'settings' | 'browse' | 'myevents' | 'tasks' | 'departments';
+// Import Pages mimicking Next.js Routing
+import HomePage from "./app/page";
+import LoginPage from "./app/login/page";
+import RegisterPage from "./app/register/page";
+import DashboardPage from "./app/dashboard/page";
+
+export type UserRole = 'admin' | 'member' | 'user';
 
 export default function App() {
+  // Routing State
+  const [currentRoute, setCurrentRoute] = useState<string>('/');
+  
+  // App State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('user');
   const [userEmail, setUserEmail] = useState('');
-  const [showPanel, setShowPanel] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
   const [currentLang, setCurrentLang] = useState<Language>('ar');
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [dashboardView, setDashboardView] = useState<DashboardView>('overview');
   const [refreshKey, setRefreshKey] = useState(0);
-  const [showCreateTask, setShowCreateTask] = useState(false);
   
   // Load events from storage
   const [events, setEvents] = useState<Event[]>([]);
@@ -84,6 +66,11 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
+  
+  // Add smooth scroll
+  useEffect(() => {
+    document.documentElement.classList.add('smooth-scroll');
+  }, []);
 
   const toggleLanguage = () => {
     setCurrentLang(prev => prev === 'ar' ? 'en' : 'ar');
@@ -109,8 +96,7 @@ export default function App() {
       setIsLoggedIn(true);
       setUserRole(role);
       setUserEmail(email);
-      setShowPanel(true);
-      setDashboardView('overview');
+      setCurrentRoute('/dashboard');
     } else {
       alert('بيانات الاعتماد غير صحيحة. يرجى استخدام بيانات الاعتماد التجريبية المقدمة.');
     }
@@ -124,16 +110,13 @@ export default function App() {
     setIsLoggedIn(true);
     setUserRole('member');
     setUserEmail(email);
-    setShowPanel(true);
-    setShowRegister(false);
-    setDashboardView('overview');
+    setCurrentRoute('/dashboard');
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserEmail('');
-    setShowPanel(false);
-    setDashboardView('overview');
+    setCurrentRoute('/');
   };
 
   const handleAddEvent = (event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => {
@@ -161,179 +144,64 @@ export default function App() {
   const handleRegisterForEvent = (eventId: string) => {
     const event = events.find(e => e.id === eventId);
     if (event) {
-      // This will be handled by EventDetailsModal
+      // This will be handled by EventDetailsModal internally in components
       alert(`سيتم توجيهك لصفحة التسجيل في: ${event.title}`);
     }
   };
 
-  const t = (key: string) => getTranslation(currentLang, key);
-
-  // Show register page
-  if (showRegister) {
+  // Router Logic
+  if (currentRoute === '/register') {
     return (
-      <Register
+      <RegisterPage
         onRegister={handleRegister}
-        onBackToLogin={() => {
-          setShowRegister(false);
-          setShowPanel(true);
-        }}
+        onBackToLogin={() => setCurrentRoute('/login')}
       />
     );
   }
 
-  // Show login page if accessing panel
-  if (showPanel && !isLoggedIn) {
+  if (currentRoute === '/login') {
     return (
-      <Login
+      <LoginPage
         onLogin={handleLogin}
-        onRegister={() => {
-          setShowPanel(false);
-          setShowRegister(true);
-        }}
+        onRegisterClick={() => setCurrentRoute('/register')}
       />
     );
   }
 
-  // Show dashboard based on role
-  if (showPanel && isLoggedIn) {
+  if (currentRoute === '/dashboard' || currentRoute.startsWith('/dashboard')) {
+    if (!isLoggedIn) {
+       setCurrentRoute('/login');
+       return null;
+    }
     return (
-      <PanelLayout
+      <DashboardPage
         userRole={userRole}
         userEmail={userEmail}
+        events={events}
         onLogout={handleLogout}
-        onNavigateToSite={() => setShowPanel(false)}
-        currentView={dashboardView}
-        onViewChange={setDashboardView}
-      >
-        {/* User (مستخدم) - Limited access */}
-        {userRole === 'user' && (
-          <>
-            {dashboardView === 'overview' && (
-              <UserDashboard events={events} onRegisterForEvent={handleRegisterForEvent} />
-            )}
-            {dashboardView === 'browse' && (
-              <UserDashboard events={events} onRegisterForEvent={handleRegisterForEvent} />
-            )}
-          </>
-        )}
-
-        {/* Member (عضو) - Standard access */}
-        {userRole === 'member' && (
-          <>
-            {dashboardView === 'overview' && <DashboardOverview />}
-            {dashboardView === 'events' && (
-              <MyEventsPanel userEmail={userEmail} />
-            )}
-            {dashboardView === 'profile' && (
-              <MemberProfile userId={userEmail} isOwnProfile={true} />
-            )}
-            {dashboardView === 'gamification' && (
-              <GamificationDashboard {...gamificationData} />
-            )}
-            {dashboardView === 'tasks' && (
-              <TasksPanel userEmail={userEmail} userRole={userRole} onCreateTask={() => setShowCreateTask(true)} />
-            )}
-            {dashboardView === 'departments' && (
-              <DepartmentsPanel />
-            )}
-          </>
-        )}
-
-        {/* Admin (مدير) - Full access */}
-        {userRole === 'admin' && (
-          <>
-            {dashboardView === 'overview' && <DashboardOverview />}
-            {dashboardView === 'events' && (
-              <AdminPanel
-                events={events}
-                onAddEvent={handleAddEvent}
-                onEditEvent={handleEditEvent}
-                onDeleteEvent={handleDeleteEvent}
-                isAdmin={true}
-              />
-            )}
-            {dashboardView === 'analytics' && <AnalyticsDashboard />}
-            {dashboardView === 'profile' && (
-              <MemberProfile userId={userEmail} isOwnProfile={true} />
-            )}
-            {dashboardView === 'gamification' && (
-              <GamificationDashboard {...gamificationData} />
-            )}
-            {dashboardView === 'settings' && <SettingsPanel />}
-            {dashboardView === 'members' && (
-              <div className="text-center py-12">
-                <p className="text-gray-600">قريباً: إدارة الأعضاء</p>
-              </div>
-            )}
-            {dashboardView === 'myevents' && (
-              <MyEventsPanel userEmail={userEmail} />
-            )}
-            {dashboardView === 'tasks' && (
-              <TasksPanel userEmail={userEmail} userRole={userRole} onCreateTask={() => setShowCreateTask(true)} />
-            )}
-            {dashboardView === 'departments' && (
-              <DepartmentsPanel />
-            )}
-          </>
-        )}
-
-        {/* Create Task Modal */}
-        {showCreateTask && (
-          <CreateTaskModal
-            isOpen={showCreateTask}
-            onClose={() => setShowCreateTask(false)}
-            createdBy={userEmail}
-          />
-        )}
-      </PanelLayout>
+        onNavigateToSite={() => setCurrentRoute('/')}
+        onAddEvent={handleAddEvent}
+        onEditEvent={handleEditEvent}
+        onDeleteEvent={handleDeleteEvent}
+        onRegisterForEvent={handleRegisterForEvent}
+        gamificationData={gamificationData}
+      />
     );
   }
 
-  // Show main website
+  // Default / Landing Page
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
-      <Navigation 
-        currentLang={currentLang}
-        onLanguageToggle={toggleLanguage}
-        isDarkMode={isDarkMode}
-        onDarkModeToggle={toggleDarkMode}
-      />
-      
-      {/* Login button in top right */}
-      <div className={`fixed ${currentLang === 'ar' ? 'left-4' : 'right-4'} top-20 z-40`}>
-        <button
-          onClick={() => setShowPanel(true)}
-          className="px-4 py-2 bg-[#4285f4] text-white rounded-lg hover:bg-[#3367d6] shadow-lg transition-colors"
-        >
-          {t('nav.panelLogin')}
-        </button>
-      </div>
-      
-      <main>
-        <section id="home">
-          <Hero lang={currentLang} />
-        </section>
-        <section id="about">
-          <About lang={currentLang} />
-        </section>
-        <section id="events">
-          <Events 
-            events={events} 
-            lang={currentLang}
-            userEmail={userEmail}
-            userRole={userRole}
-            isLoggedIn={isLoggedIn}
-            onRefresh={() => setRefreshKey(prev => prev + 1)}
-          />
-        </section>
-        <section id="team">
-          <Team lang={currentLang} />
-        </section>
-        <section id="contact">
-          <Contact lang={currentLang} />
-        </section>
-      </main>
-      <Footer lang={currentLang} />
-    </div>
+    <HomePage
+      currentLang={currentLang}
+      isDarkMode={isDarkMode}
+      events={events}
+      onLanguageToggle={toggleLanguage}
+      onDarkModeToggle={toggleDarkMode}
+      onLoginClick={() => setCurrentRoute(isLoggedIn ? '/dashboard' : '/login')}
+      onRefreshEvents={() => setRefreshKey(prev => prev + 1)}
+      userEmail={userEmail}
+      userRole={userRole}
+      isLoggedIn={isLoggedIn}
+    />
   );
 }
