@@ -51,4 +51,9 @@ export const userService = {
     });
     return response.data;
   },
+
+  async getUserRank(id: string) {
+    const response = await api.get(`/users/${id}/rank`);
+    return response.data;
+  },
 };

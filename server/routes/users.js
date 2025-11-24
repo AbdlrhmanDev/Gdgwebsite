@@ -8,11 +8,13 @@ const {
   deleteUser,
   addPoints,
   awardBadge,
-  getLeaderboard
+  getLeaderboard,
+  getUserRank
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/auth');
 
 router.get('/leaderboard', getLeaderboard);
+router.get('/:id/rank', getUserRank);
 
 // Public route for getting team members (filtered in frontend)
 router.get('/public/team', getUsers);

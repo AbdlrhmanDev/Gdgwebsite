@@ -286,6 +286,35 @@ exports.getLeaderboard = async (req, res) => {
   }
 };
 
+// @desc    Get user rank
+// @route   GET /api/users/:id/rank
+// @access  Public
+exports.getUserRank = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const rank = await User.countDocuments({ points: { $gt: user.points } }) + 1;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        rank
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Delete user
 // @route   DELETE /api/users/:id
 // @access  Private (Admin only)

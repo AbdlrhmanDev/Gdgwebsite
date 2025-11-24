@@ -103,12 +103,11 @@ export default function App() {
       if (userResponse.success) {
         const userData = userResponse.data;
         
-        // Fetch all users to calculate rank
-        const usersResponse = await userService.getUsers();
+        // Fetch user rank
+        const rankResponse = await userService.getUserRank(userId);
         let userRank = 0;
-        if (usersResponse.success) {
-          const sortedUsers = usersResponse.data.sort((a: any, b: any) => b.points - a.points);
-          userRank = sortedUsers.findIndex((u: any) => u._id === userId) + 1;
+        if (rankResponse.success) {
+          userRank = rankResponse.data.rank;
         }
         
         // Fetch user badges
