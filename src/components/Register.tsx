@@ -5,6 +5,7 @@ import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { UserPlus, ArrowRight, User, CreditCard, Mail, Lock } from "lucide-react";
 import { motion } from "motion/react";
+import { toast } from "sonner"; // Import toast
 
 interface RegisterProps {
   onRegister: (email: string, password: string, name: string, studentId: string) => void;
@@ -24,12 +25,12 @@ export function Register({ onRegister, onBackToLogin }: RegisterProps) {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      alert("كلمات المرور غير متطابقة");
+      toast.error("كلمات المرور غير متطابقة"); // Use toast.error
       return;
     }
 
     if (formData.password.length < 6) {
-      alert("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل"); // Use toast.error
       return;
     }
 
@@ -100,7 +101,7 @@ export function Register({ onRegister, onBackToLogin }: RegisterProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300">البريد الإلكتروني الجامعي</Label>
+                <Label htmlFor="email" className="text-gray-300">البريد الإلكتروني </Label>
                 <div className="relative">
                     <Mail className="absolute right-3 top-3 w-4 h-4 text-gray-500" />
                     <Input

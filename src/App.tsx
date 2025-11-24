@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { getTranslation, type Language } from "./lib/i18n";
+import { type Language } from "./lib/i18n";
 import { authService } from "./services/authService";
 import { eventService, type Event as ApiEvent } from "./services/eventService";
 import { userService } from "./services/userService";
 import { badgeService } from "./services/badgeService";
+import { Toaster } from "./components/ui/sonner";
+import { toast } from "sonner";
 
 // Import Pages mimicking Next.js Routing
 import HomePage from "./app/page";
@@ -182,6 +184,7 @@ export default function App() {
       const response = await authService.login({ email, password });
       
       if (response.success) {
+        toast.success('تم تسجيل الدخول بنجاح!');
         setIsLoggedIn(true);
         setUserRole(response.user.role);
         setUserEmail(response.user.email);
@@ -190,7 +193,7 @@ export default function App() {
       }
     } catch (error: any) {
       const message = error.response?.data?.message || 'فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد.';
-      alert(message);
+      toast.error(message);
       console.error('Login failed:', error);
     }
   };
@@ -206,7 +209,7 @@ export default function App() {
       });
       
       if (response.success) {
-        alert(`تم التسجيل بنجاح! مرحباً ${name}`);
+        toast.success(`تم التسجيل بنجاح! مرحباً ${name}`);
         setIsLoggedIn(true);
         setUserRole(response.user.role);
         setUserEmail(response.user.email);
@@ -214,7 +217,7 @@ export default function App() {
       }
     } catch (error: any) {
       const message = error.response?.data?.message || 'فشل التسجيل. يرجى المحاولة مرة أخرى.';
-      alert(message);
+      toast.error(message);
       console.error('Registration failed:', error);
     }
   };
@@ -232,11 +235,11 @@ export default function App() {
       const response = await eventService.createEvent(event);
       if (response.success) {
         setRefreshKey(prev => prev + 1);
-        alert('تم إنشاء الفعالية بنجاح!');
+        toast.success('تم إنشاء الفعالية بنجاح!');
       }
     } catch (error: any) {
       const message = error.response?.data?.message || 'فشل إنشاء الفعالية';
-      alert(message);
+      toast.error(message);
       console.error('Failed to create event:', error);
     }
   };
@@ -246,11 +249,11 @@ export default function App() {
       const response = await eventService.updateEvent(id, updatedEvent);
       if (response.success) {
         setRefreshKey(prev => prev + 1);
-        alert('تم تحديث الفعالية بنجاح!');
+        toast.success('تم تحديث الفعالية بنجاح!');
       }
     } catch (error: any) {
       const message = error.response?.data?.message || 'فشل تحديث الفعالية';
-      alert(message);
+      toast.error(message);
       console.error('Failed to update event:', error);
     }
   };
@@ -260,11 +263,11 @@ export default function App() {
       const response = await eventService.deleteEvent(id);
       if (response.success) {
         setRefreshKey(prev => prev + 1);
-        alert('تم حذف الفعالية بنجاح!');
+        toast.success('تم حذف الفعالية بنجاح!');
       }
     } catch (error: any) {
       const message = error.response?.data?.message || 'فشل حذف الفعالية';
-      alert(message);
+      toast.error(message);
       console.error('Failed to delete event:', error);
     }
   };
@@ -273,82 +276,89 @@ export default function App() {
     const event = events.find(e => e.id === eventId);
     if (event) {
       // This will be handled by EventDetailsModal internally in components
-      alert(`سيتم توجيهك لصفحة التسجيل في: ${event.title}`);
+      toast(`سيتم توجيهك لصفحة التسجيل في: ${event.title}`);
     }
   };
 
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">جاري التحميل...</p>
+  const renderPage = () => {
+    // Show loading state
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">جاري التحميل...</p>
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  // Router Logic
-  
-  // If logged in and trying to access login/register, redirect to dashboard
-  if (isLoggedIn && (currentRoute === '/login' || currentRoute === '/register')) {
-    setCurrentRoute('/dashboard');
-    return null;
-  }
-
-  if (currentRoute === '/register') {
-    return (
-      <RegisterPage
-        onRegister={handleRegister}
-        onBackToLogin={() => setCurrentRoute('/login')}
-      />
-    );
-  }
-
-  if (currentRoute === '/login') {
-    return (
-      <LoginPage
-        onLogin={handleLogin}
-        onRegisterClick={() => setCurrentRoute('/register')}
-      />
-    );
-  }
-
-  if (currentRoute === '/dashboard' || currentRoute.startsWith('/dashboard')) {
-    if (!isLoggedIn) {
-       setCurrentRoute('/login');
-       return null;
+      );
     }
+
+    // If logged in and trying to access login/register, redirect to dashboard
+    if (isLoggedIn && (currentRoute === '/login' || currentRoute === '/register')) {
+      setCurrentRoute('/dashboard');
+      return null;
+    }
+
+    if (currentRoute === '/register') {
+      return (
+        <RegisterPage
+          onRegister={handleRegister}
+          onBackToLogin={() => setCurrentRoute('/login')}
+        />
+      );
+    }
+
+    if (currentRoute === '/login') {
+      return (
+        <LoginPage
+          onLogin={handleLogin}
+          onRegisterClick={() => setCurrentRoute('/register')}
+        />
+      );
+    }
+
+    if (currentRoute === '/dashboard' || currentRoute.startsWith('/dashboard')) {
+      if (!isLoggedIn) {
+        setCurrentRoute('/login');
+        return null;
+      }
+      return (
+        <DashboardPage
+          userRole={userRole}
+          userEmail={userEmail}
+          userId={userId}
+          events={events}
+          onLogout={handleLogout}
+          onNavigateToSite={() => setCurrentRoute('/')}
+          onAddEvent={handleAddEvent}
+          onEditEvent={handleEditEvent}
+          onDeleteEvent={handleDeleteEvent}
+          onRegisterForEvent={handleRegisterForEvent}
+          gamificationData={gamificationData}
+        />
+      );
+    }
+
+    // Default / Landing Page
     return (
-      <DashboardPage
-        userRole={userRole}
-        userEmail={userEmail}
-        userId={userId}
+      <HomePage
+        currentLang={currentLang}
+        isDarkMode={isDarkMode}
         events={events}
-        onLogout={handleLogout}
-        onNavigateToSite={() => setCurrentRoute('/')}
-        onAddEvent={handleAddEvent}
-        onEditEvent={handleEditEvent}
-        onDeleteEvent={handleDeleteEvent}
-        onRegisterForEvent={handleRegisterForEvent}
-        gamificationData={gamificationData}
+        onLanguageToggle={toggleLanguage}
+        onLoginClick={() => setCurrentRoute(isLoggedIn ? '/dashboard' : '/login')}
+        onRefreshEvents={() => setRefreshKey(prev => prev + 1)}
+        userEmail={userEmail}
+        userRole={userRole}
+        isLoggedIn={isLoggedIn}
       />
     );
-  }
-
-  // Default / Landing Page
+  };
+  
   return (
-    <HomePage
-      currentLang={currentLang}
-      isDarkMode={isDarkMode}
-      events={events}
-      onLanguageToggle={toggleLanguage}
-      onLoginClick={() => setCurrentRoute(isLoggedIn ? '/dashboard' : '/login')}
-      onRefreshEvents={() => setRefreshKey(prev => prev + 1)}
-      userEmail={userEmail}
-      userRole={userRole}
-      isLoggedIn={isLoggedIn}
-    />
+    <>
+      <Toaster richColors position="bottom-right" />
+      {renderPage()}
+    </>
   );
 }
