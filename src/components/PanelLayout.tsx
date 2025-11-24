@@ -47,7 +47,6 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
       return [
         ...baseItems,
         { id: 'events', label: 'فعالياتي', icon: Calendar },
-        { id: 'departments', label: 'قسمي', icon: Briefcase },
         { id: 'profile', label: 'الملف الشخصي', icon: User },
         { id: 'gamification', label: 'النقاط والإنجازات', icon: Trophy }
       ];
