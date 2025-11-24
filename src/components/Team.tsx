@@ -27,7 +27,7 @@ export function Team({ lang }: TeamProps) {
       if (data.success) {
         // Filter only admins and members, sort by role (admins first) then by points
         const teamMembers = data.data
-          .filter((user: any) => user.role === 'admin' || user.role === 'member')
+          .filter((user: any) => user.role === 'admin')
           .sort((a: any, b: any) => {
             if (a.role === 'admin' && b.role !== 'admin') return -1;
             if (a.role !== 'admin' && b.role === 'admin') return 1;
