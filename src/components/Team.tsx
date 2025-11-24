@@ -195,29 +195,6 @@ export function Team({ lang }: TeamProps) {
           </div>
         )}
 
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="bg-gradient-to-br from-card to-muted rounded-[2.5rem] border border-border p-12 text-center relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-red-500/10 rounded-full blur-3xl" />
-          
-          <div className="relative z-10 max-w-2xl mx-auto">
-             <h3 className="text-3xl font-bold mb-4">
-               {lang === 'ar' ? 'هل تريد الانضمام لفريقنا؟' : 'Want to join our team?'}
-             </h3>
-             <p className="text-lg text-muted-foreground mb-8">
-               {lang === 'ar'
-                 ? 'نحن نبحث دائماً عن طلاب شغوفين للمساعدة في تنظيم الفعاليات وتنمية مجتمعنا. يفتح باب التقديم في بداية كل فصل دراسي.'
-                 : "We're always looking for passionate students to help organize events and grow our community. Applications open at the start of each semester."}
-             </p>
-             <button className="px-8 py-4 bg-foreground text-background rounded-full font-medium hover:opacity-90 transition-all hover:scale-105 shadow-lg">
-               {lang === 'ar' ? 'قدم الآن' : 'Apply Now'}
-             </button>
-          </div>
-        </motion.div>
       </div>
     </div>
   );
