@@ -12,10 +12,10 @@ const { protect, authorize } = require('../middleware/auth');
 
 router.post('/', protect, registerForEvent);
 router.get('/my', protect, getMyRegistrations);
-router.get('/', protect, authorize('admin'), getRegistrations);
+router.get('/', protect, authorize('admin', 'leader'), getRegistrations);
 
 router.put('/:id/cancel', protect, cancelRegistration);
-router.put('/:id/attend', protect, authorize('admin'), markAttendance);
+router.put('/:id/attend', protect, authorize('admin', 'leader'), markAttendance);
 router.put('/:id/feedback', protect, addFeedback);
 
 module.exports = router;

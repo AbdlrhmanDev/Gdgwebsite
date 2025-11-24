@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { toast } from "sonner";
 import { registrationService } from "../services/registrationService";
 
 interface EventRegistrationsPanelProps {
@@ -48,21 +49,18 @@ export function EventRegistrationsPanel({ eventId, eventTitle, onClose }: EventR
   };
 
   const handleMarkAttended = async (id: string) => {
-    if (!confirm('هل تريد تسجيل حضور هذا المشارك؟')) return;
-
-    try {
-      const response = await registrationService.markAttendance(id);
-      if (response.success) {
-        await loadRegistrations(); // Reload data
-      }
-    } catch (error) {
-      console.error('Failed to mark attendance:', error);
-      alert('فشل تسجيل الحضور');
-    }
+    toast.promise(registrationService.markAttendance(id), {
+      loading: 'جاري تسجيل الحضور...',
+      success: () => {
+        loadRegistrations();
+        return 'تم تسجيل الحضور بنجاح';
+      },
+      error: 'فشل تسجيل الحضور',
+    });
   };
 
   const handleSendEmail = (email: string) => {
-    alert(`إرسال بريد إلى: ${email}`);
+    toast.info(`إرسال بريد إلى: ${email}`);
   };
 
   const handleExportData = () => {
