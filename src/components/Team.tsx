@@ -138,7 +138,6 @@ export function Team({ lang }: TeamProps) {
                     {member.name}
                   </h3>
                   <p className="text-muted-foreground font-medium mb-2">
-                    {getRoleLabel(member.role)}
                   </p>
                   {member.department && (
                     <p className="text-sm text-muted-foreground mb-4 flex items-center justify-center gap-2">
