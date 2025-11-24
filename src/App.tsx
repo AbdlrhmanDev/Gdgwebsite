@@ -13,7 +13,7 @@ import LoginPage from "./app/login/page";
 import RegisterPage from "./app/register/page";
 import DashboardPage from "./app/dashboard/page";
 
-export type UserRole = 'admin' | 'member' | 'user';
+export type UserRole = 'admin' | 'member' | 'user' | 'leader';
 
 // Map API event to local event format
 const mapApiEvent = (apiEvent: ApiEvent): any => ({

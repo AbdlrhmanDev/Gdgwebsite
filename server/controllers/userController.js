@@ -114,8 +114,8 @@ exports.updateUser = async (req, res) => {
   try {
     const { name, email, password, role, phone, bio, avatar, socialLinks, department } = req.body;
     
-    // Check if user is updating their own profile or is admin
-    if (req.params.id !== req.user.id && req.user.role !== 'admin') {
+    // Check if user is updating their own profile or is admin/leader
+    if (req.params.id !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'leader') {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this profile'
@@ -131,8 +131,8 @@ exports.updateUser = async (req, res) => {
     if (socialLinks) updateData.socialLinks = socialLinks;
     if (department) updateData.department = department;
     
-    // Admin-only fields
-    if (req.user.role === 'admin') {
+    // Admin/Leader-only fields
+    if (req.user.role === 'admin' || req.user.role === 'leader') {
       if (email) updateData.email = email;
       if (role) updateData.role = role;
       if (password) {

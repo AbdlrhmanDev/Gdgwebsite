@@ -24,6 +24,12 @@ exports.register = async (req, res) => {
       });
     }
 
+    // Assign role
+    let role = 'member';
+    if (name === 'Sultanah' || name === 'Abdullrazaq Naqsho') {
+      role = 'leader';
+    }
+
     // Create user
     const user = await User.create({
       name,
@@ -32,7 +38,7 @@ exports.register = async (req, res) => {
       studentId,
       department: department || 'none',
       phone,
-      role: 'member' // Default role for new registrations
+      role
     });
 
     // Generate token

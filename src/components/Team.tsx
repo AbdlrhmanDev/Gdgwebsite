@@ -25,12 +25,14 @@ export function Team({ lang }: TeamProps) {
       const data = await response.json();
       
       if (data.success) {
-        // Filter only admins and members, sort by role (admins first) then by points
+        // Filter only admins and leaders, sort by role (admins/leaders first) then by points
         const teamMembers = data.data
-          .filter((user: any) => user.role === 'admin')
+          .filter((user: any) => user.role === 'admin' || user.role === 'leader')
           .sort((a: any, b: any) => {
-            if (a.role === 'admin' && b.role !== 'admin') return -1;
-            if (a.role !== 'admin' && b.role === 'admin') return 1;
+            const aIsSpecial = a.role === 'admin' || a.role === 'leader';
+            const bIsSpecial = b.role === 'admin' || b.role === 'leader';
+            if (aIsSpecial && !bIsSpecial) return -1;
+            if (!aIsSpecial && bIsSpecial) return 1;
             return b.points - a.points;
           })
           .slice(0, 6); // Show top 6 team members
@@ -48,9 +50,13 @@ export function Team({ lang }: TeamProps) {
 
   const getRoleLabel = (role: string) => {
     if (lang === 'ar') {
-      return role === 'admin' ? 'قائد الفريق' : 'عضو الفريق';
+      if (role === 'admin') return 'عضو في الفريق';
+      if (role === 'leader') return 'قائد';
+      return 'عضو الفريق';
     }
-    return role === 'admin' ? 'Team Lead' : 'Team Member';
+    if (role === 'admin') return 'Team Lead';
+    if (role === 'leader') return 'Leader';
+    return 'Team Member';
   };
 
   const getColorForIndex = (index: number) => {
@@ -138,6 +144,7 @@ export function Team({ lang }: TeamProps) {
                     {member.name}
                   </h3>
                   <p className="text-muted-foreground font-medium mb-2">
+                    {getRoleLabel(member.role)}
                   </p>
                   {member.department && (
                     <p className="text-sm text-muted-foreground mb-4 flex items-center justify-center gap-2">

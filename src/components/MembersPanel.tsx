@@ -27,13 +27,14 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Label } from "./ui/label";
+import { toast } from "sonner";
 import { userService } from "../services/userService";
 
 export function MembersPanel() {
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'member' | 'user'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'member' | 'user' | 'leader'>('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -42,7 +43,7 @@ export function MembersPanel() {
     name: '',
     email: '',
     password: '',
-    role: 'user' as 'admin' | 'member' | 'user',
+    role: 'user' as 'admin' | 'member' | 'user' | 'leader',
   });
 
   useEffect(() => {
@@ -70,10 +71,10 @@ export function MembersPanel() {
         await loadMembers();
         setShowAddDialog(false);
         setFormData({ name: '', email: '', password: '', role: 'user' });
-        alert('تم إضافة العضو بنجاح');
+        toast.success('تم إضافة العضو بنجاح');
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'فشل في إضافة العضو');
+      toast.error(error.response?.data?.message || 'فشل في إضافة العضو');
     }
   };
 
@@ -94,10 +95,10 @@ export function MembersPanel() {
         setShowEditDialog(false);
         setSelectedMember(null);
         setFormData({ name: '', email: '', password: '', role: 'user' });
-        alert('تم تحديث العضو بنجاح');
+        toast.success('تم تحديث العضو بنجاح');
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'فشل في تحديث العضو');
+      toast.error(error.response?.data?.message || 'فشل في تحديث العضو');
     }
   };
 
@@ -108,10 +109,10 @@ export function MembersPanel() {
         await loadMembers();
         setShowDeleteDialog(false);
         setSelectedMember(null);
-        alert('تم حذف العضو بنجاح');
+        toast.success('تم حذف العضو بنجاح');
       }
     } catch (error: any) {
-      alert(error.response?.data?.message || 'فشل في حذف العضو');
+      toast.error(error.response?.data?.message || 'فشل في حذف العضو');
     }
   };
 
@@ -135,6 +136,8 @@ export function MembersPanel() {
     switch (role) {
       case 'admin':
         return 'bg-red-500';
+      case 'leader':
+        return 'bg-yellow-500';
       case 'member':
         return 'bg-blue-500';
       case 'user':
@@ -148,6 +151,8 @@ export function MembersPanel() {
     switch (role) {
       case 'admin':
         return 'مدير';
+      case 'leader':
+        return 'قائد';
       case 'member':
         return 'عضو';
       case 'user':
@@ -167,6 +172,7 @@ export function MembersPanel() {
   const stats = {
     total: members.length,
     admins: members.filter(m => m.role === 'admin').length,
+    leaders: members.filter(m => m.role === 'leader').length,
     members: members.filter(m => m.role === 'member').length,
     users: members.filter(m => m.role === 'user').length,
   };
@@ -276,6 +282,7 @@ export function MembersPanel() {
               <SelectContent>
                 <SelectItem value="all">جميع الأدوار</SelectItem>
                 <SelectItem value="admin">مدير</SelectItem>
+                <SelectItem value="leader">قائد</SelectItem>
                 <SelectItem value="member">عضو</SelectItem>
                 <SelectItem value="user">مستخدم</SelectItem>
               </SelectContent>
@@ -422,6 +429,7 @@ export function MembersPanel() {
                   <SelectItem value="user">مستخدم</SelectItem>
                   <SelectItem value="member">عضو</SelectItem>
                   <SelectItem value="admin">مدير</SelectItem>
+                  <SelectItem value="leader">قائد</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -486,6 +494,7 @@ export function MembersPanel() {
                   <SelectItem value="user">مستخدم</SelectItem>
                   <SelectItem value="member">عضو</SelectItem>
                   <SelectItem value="admin">مدير</SelectItem>
+                  <SelectItem value="leader">قائد</SelectItem>
                 </SelectContent>
               </Select>
             </div>
