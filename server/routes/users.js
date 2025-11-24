@@ -20,7 +20,7 @@ router.get('/:id/rank', getUserRank);
 router.get('/public/team', getUsers);
 
 router.route('/')
-  .get(protect, authorize('admin'), getUsers)
+  .get(getUsers)
   .post(protect, authorize('admin'), createUser);
 
 router.route('/:id')

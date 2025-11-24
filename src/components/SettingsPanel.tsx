@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Settings, 
   Bell, 
@@ -23,65 +23,46 @@ import { Switch } from "./ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Badge } from "./ui/badge";
+import { settingsService } from "../services/settingsService";
 
 export function SettingsPanel() {
-  const [settings, setSettings] = useState({
-    // General Settings
-    siteName: "GDG on Campus - جامعة المستقبل",
-    siteDescription: "مجتمع مطوري Google في جامعة المستقبل",
-    contactEmail: "gdg@mustaqbal.edu",
-    contactPhone: "+966 XX XXX XXXX",
-    
-    // Notification Settings
-    emailNotifications: true,
-    pushNotifications: true,
-    eventReminders: true,
-    weeklyDigest: true,
-    
-    // Email Settings
-    smtpServer: "smtp.gmail.com",
-    smtpPort: "587",
-    smtpUsername: "gdg@mustaqbal.edu",
-    smtpPassword: "",
-    
-    // Permissions
-    allowMemberRegistration: true,
-    requireEmailVerification: true,
-    autoApproveMembers: false,
-    allowEventCreation: false,
-    
-    // Appearance
-    primaryColor: "#4285f4",
-    secondaryColor: "#34a853",
-    darkMode: false,
-    rtlSupport: true,
-    
-    // Integrations
-    googleAnalyticsId: "",
-    googleCalendarSync: false,
-    googleDriveIntegration: false,
-    googleMeetIntegration: true,
-    
-    // Certificate Settings
-    certificateTemplate: "default",
-    autoGenerateCertificates: true,
-    certificateSignature: "Dr. Ahmed Al-Rashid",
-    
-    // Advanced
-    backupFrequency: "daily",
-    dataRetention: "1year",
-    apiAccess: false
-  });
-
+  const [settings, setSettings] = useState<any>({});
+  const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSaving(false);
-    alert("تم حفظ الإعدادات بنجاح!");
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await settingsService.getSettings();
+      if (response.success) {
+        setSettings(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const response = await settingsService.updateSettings(settings);
+      if (response.success) {
+        alert("تم حفظ الإعدادات بنجاح!");
+      }
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      alert("فشل حفظ الإعدادات");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
 
   const handleBackup = () => {
     alert("جاري إنشاء نسخة احتياطية...");

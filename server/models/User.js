@@ -78,6 +78,18 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Task'
   }],
+  projects: [{
+    name: String,
+    description: String,
+    url: String,
+    stars: Number,
+    tech: [String]
+  }],
+  certificates: [{
+    name: String,
+    url: String,
+    date: Date
+  }],
   isActive: {
     type: Boolean,
     default: true

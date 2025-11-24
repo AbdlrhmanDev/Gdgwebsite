@@ -61,7 +61,8 @@ exports.getUsers = async (req, res) => {
     }
     
     const users = await User.find(query)
-      .select('-password')
+      .select('_id name avatar role department points level email socialLinks.github socialLinks.linkedin')
+      .populate('department', 'nameAr color')
       .sort('-points');
     
     res.status(200).json({

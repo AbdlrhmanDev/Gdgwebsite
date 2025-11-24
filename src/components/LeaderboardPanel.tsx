@@ -18,11 +18,13 @@ export function LeaderboardPanel() {
   const loadLeaderboard = async () => {
     try {
       setLoading(true);
-      const response = await userService.getUsers({ role: filter === 'all' ? undefined : filter });
+      const response = await userService.getLeaderboard(filter === 'all' ? 100 : undefined);
       if (response.success) {
-        // Sort by points descending
-        const sorted = response.data.sort((a: any, b: any) => b.points - a.points);
-        setLeaderboard(sorted);
+        let filteredData = response.data;
+        if(filter !== 'all') {
+          filteredData = response.data.filter((u: any) => u.user.role === filter);
+        }
+        setLeaderboard(filteredData);
       }
     } catch (error) {
       console.error('Failed to load leaderboard:', error);

@@ -32,7 +32,10 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
     points: 0,
     level: 0,
     department: "",
-    badges: [] as any[]
+    badges: [] as any[],
+    eventsAttended: [] as any[],
+    projects: [] as any[],
+    certificates: [] as any[]
   });
 
   useEffect(() => {
@@ -60,7 +63,10 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
           points: user.points || 0,
           level: user.level || 1,
           department: user.department || "none",
-          badges: user.badges || []
+          badges: user.badges || [],
+          eventsAttended: user.eventsAttended || [],
+          projects: user.projects || [],
+          certificates: user.certificates || []
         });
       }
     } catch (error) {
@@ -294,19 +300,19 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
                 <CardContent className="space-y-4">
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/30">
                     <span className="text-sm text-muted-foreground">الفعاليات المشاركة</span>
-                    <span className="text-lg font-semibold">24</span>
+                    <span className="text-lg font-semibold">{profile.eventsAttended.length}</span>
                 </div>
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/30">
                     <span className="text-sm text-muted-foreground">المشاريع</span>
-                    <span className="text-lg font-semibold">8</span>
+                    <span className="text-lg font-semibold">{profile.projects.length}</span>
                 </div>
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/30">
                     <span className="text-sm text-muted-foreground">الشهادات</span>
-                    <span className="text-lg font-semibold">12</span>
+                    <span className="text-lg font-semibold">{profile.certificates.length}</span>
                 </div>
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/30 border border-yellow-500/20">
                     <span className="text-sm text-muted-foreground">النقاط</span>
-                    <span className="text-lg font-bold text-[#f9ab00]">1,250</span>
+                    <span className="text-lg font-bold text-[#f9ab00]">{profile.points}</span>
                 </div>
                 </CardContent>
             </Card>
@@ -404,11 +410,7 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
                 </CardHeader>
                 <CardContent>
                 <div className="grid sm:grid-cols-2 gap-4">
-                {[
-                    { name: "نظام إدارة المكتبة", tech: "React, Node.js", stars: 45 },
-                    { name: "تطبيق الطقس", tech: "Flutter, Firebase", stars: 32 },
-                    { name: "منصة التعلم", tech: "Next.js, PostgreSQL", stars: 67 }
-                ].map((project, index) => (
+                {profile.projects.map((project, index) => (
                     <div key={index} className="border border-border rounded-xl p-4 hover:bg-muted/30 transition-colors group">
                     <div className="flex justify-between items-start mb-2">
                         <h4 className="font-medium group-hover:text-primary transition-colors">{project.name}</h4>
@@ -417,7 +419,7 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
                             <span>{project.stars}</span>
                         </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-3">{project.tech}</p>
+                    <p className="text-xs text-muted-foreground mb-3">{project.tech.join(', ')}</p>
                     <div className="flex gap-2">
                          <div className="h-1.5 w-1.5 rounded-full bg-primary/50" />
                          <div className="h-1.5 w-1.5 rounded-full bg-primary/50" />
