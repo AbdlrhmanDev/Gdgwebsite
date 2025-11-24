@@ -289,7 +289,9 @@ export function MyEventsPanel({ userEmail }: MyEventsPanelProps) {
                     </div>
                     <h3 className="text-lg font-medium mb-1">لا توجد فعاليات قادمة</h3>
                     <p className="text-muted-foreground mb-4">لم تسجل في أي فعالية بعد</p>
-                    <Button className="bg-[#4285f4] hover:bg-[#3367d6]">
+                    <Button className="bg-[#4285f4] hover:bg-[#3367d6]"  onClick={() => {
+    window.location.href = "https://www.gdg-uom.me/#events";
+  }}>
                     تصفح الفعاليات المتاحة
                     </Button>
                 </CardContent>
