@@ -19,7 +19,11 @@ app.use(cors({
     'http://localhost:3001',
     'https://gdg-guc3n1h1h-orisho7s-projects.vercel.app',
     'https://gdg-8v8jijt9x-orisho7s-projects.vercel.app',
-    /\.vercel\.app$/
+    'https://gdg-g5b0i7q78-orisho7s-projects.vercel.app',
+    'https://www.gdg-uom.me',
+    'https://gdg-uom.me',
+    /\.vercel\.app$/,
+    /\.gdg-uom\.me$/
   ],
   credentials: true
 }));
