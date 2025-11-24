@@ -6,8 +6,8 @@ export const settingsService = {
     return response.data;
   },
 
-  async updateSettings(settingsData: any) {
-    const response = await api.put('/settings', settingsData);
+  async updateSettings(settings: any) {
+    const response = await api.put('/settings', settings);
     return response.data;
-  },
+  }
 };

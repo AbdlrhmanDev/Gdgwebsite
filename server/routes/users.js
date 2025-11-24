@@ -7,6 +7,7 @@ const {
   updateUser,
   deleteUser,
   addPoints,
+  setPoints,
   awardBadge,
   getLeaderboard,
   getUserRank
@@ -28,7 +29,8 @@ router.route('/:id')
   .put(protect, updateUser)
   .delete(protect, authorize('admin'), deleteUser);
 
-router.post('/:id/points', protect, authorize('admin'), addPoints);
-router.post('/:id/badges', protect, authorize('admin'), awardBadge);
+router.post('/:id/points', protect, authorize('admin', 'leader'), addPoints);
+router.put('/:id/points', protect, authorize('admin', 'leader'), setPoints);
+router.post('/:id/badges', protect, authorize('admin', 'leader'), awardBadge);
 
 module.exports = router;

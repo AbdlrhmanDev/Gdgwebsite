@@ -197,6 +197,42 @@ exports.addPoints = async (req, res) => {
   }
 };
 
+// @desc    Set points for user
+// @route   PUT /api/users/:id/points
+// @access  Private (Admin only)
+exports.setPoints = async (req, res) => {
+  try {
+    const { points } = req.body;
+    
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    user.points = points;
+    user.calculateLevel();
+    await user.save();
+    
+    res.status(200).json({
+      success: true,
+      message: `Set points to ${points}`,
+      data: {
+        points: user.points,
+        level: user.level
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Award badge to user
 // @route   POST /api/users/:id/badges
 // @access  Private (Admin only)

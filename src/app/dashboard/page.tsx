@@ -48,6 +48,46 @@ export default function DashboardPage({
   const [dashboardView, setDashboardView] = useState<DashboardView>('overview');
   const [showCreateTask, setShowCreateTask] = useState(false);
 
+  const renderContent = () => {
+    switch (dashboardView) {
+      case 'overview':
+        return <DashboardOverview />;
+      case 'events':
+        return (
+          <AdminPanel
+            events={events}
+            onAddEvent={onAddEvent}
+            onEditEvent={onEditEvent}
+            onDeleteEvent={onDeleteEvent}
+            isAdmin={userRole === 'admin'}
+            userRole={userRole}
+          />
+        );
+      case 'analytics':
+        return <AnalyticsDashboard />;
+      case 'profile':
+        return <MemberProfile userId={userId} isOwnProfile={true} />;
+      case 'gamification':
+        return <GamificationDashboard {...gamificationData} />;
+      case 'settings':
+        return <SettingsPanel />;
+      case 'members':
+        return <MembersPanel />;
+      case 'myevents':
+        return <MyEventsPanel userEmail={userEmail} />;
+      case 'tasks':
+        return <TasksPanel userEmail={userEmail} userRole={userRole} onCreateTask={() => setShowCreateTask(true)} />;
+      case 'departments':
+        return <DepartmentsPanel />;
+      case 'leaderboard':
+        return <LeaderboardPanel />;
+      case 'browse':
+        return <UserDashboard events={events} onRegisterForEvent={onRegisterForEvent} />;
+      default:
+        return <DashboardOverview />;
+    }
+  };
+
   return (
     <PanelLayout
       userRole={userRole}
@@ -57,76 +97,7 @@ export default function DashboardPage({
       currentView={dashboardView}
       onViewChange={setDashboardView}
     >
-      {/* User (مستخدم) - Limited access */}
-      {userRole === 'user' && (
-        <>
-          {dashboardView === 'overview' && (
-            <UserDashboard events={events} onRegisterForEvent={onRegisterForEvent} />
-          )}
-          {dashboardView === 'browse' && (
-            <UserDashboard events={events} onRegisterForEvent={onRegisterForEvent} />
-          )}
-        </>
-      )}
-
-      {/* Member (عضو) - Standard access */}
-      {userRole === 'member' && (
-        <>
-          {dashboardView === 'overview' && <DashboardOverview />}
-          {(dashboardView === 'myevents' || dashboardView === 'events') && (
-            <MyEventsPanel userEmail={userEmail} />
-          )}
-          {dashboardView === 'profile' && (
-            <MemberProfile userId={userId} isOwnProfile={true} />
-          )}
-          {dashboardView === 'gamification' && (
-            <GamificationDashboard {...gamificationData} />
-          )}
-          {dashboardView === 'departments' && (
-            <DepartmentsPanel />
-          )}
-        </>
-      )}
-
-      {/* Admin & Leader - Full access */}
-      {(userRole === 'admin' || userRole === 'leader') && (
-        <>
-          {dashboardView === 'overview' && <DashboardOverview />}
-          {dashboardView === 'events' && (
-            <AdminPanel
-              events={events}
-              onAddEvent={onAddEvent}
-              onEditEvent={onEditEvent}
-              onDeleteEvent={onDeleteEvent}
-              isAdmin={userRole === 'admin'}
-              userRole={userRole}
-            />
-          )}
-          {dashboardView === 'analytics' && <AnalyticsDashboard />}
-          {dashboardView === 'profile' && (
-            <MemberProfile userId={userId} isOwnProfile={true} />
-          )}
-          {dashboardView === 'gamification' && (
-            <GamificationDashboard {...gamificationData} />
-          )}
-          {dashboardView === 'settings' && <SettingsPanel />}
-          {dashboardView === 'members' && (
-            <MembersPanel />
-          )}
-          {dashboardView === 'myevents' && (
-            <MyEventsPanel userEmail={userEmail} />
-          )}
-          {dashboardView === 'tasks' && (
-            <TasksPanel userEmail={userEmail} userRole={userRole} onCreateTask={() => setShowCreateTask(true)} />
-          )}
-          {dashboardView === 'departments' && (
-            <DepartmentsPanel />
-          )}
-          {dashboardView === 'leaderboard' && (
-            <LeaderboardPanel />
-          )}
-        </>
-      )}
+      {renderContent()}
 
       {/* Create Task Modal */}
       {showCreateTask && (

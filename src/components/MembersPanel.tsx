@@ -38,6 +38,7 @@ export function MembersPanel() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showSetPointsDialog, setShowSetPointsDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -45,6 +46,7 @@ export function MembersPanel() {
     password: '',
     role: 'user' as 'admin' | 'member' | 'user' | 'leader',
   });
+  const [points, setPoints] = useState(0);
 
   useEffect(() => {
     loadMembers();
@@ -130,6 +132,26 @@ export function MembersPanel() {
   const openDeleteDialog = (member: any) => {
     setSelectedMember(member);
     setShowDeleteDialog(true);
+  };
+
+  const openSetPointsDialog = (member: any) => {
+    setSelectedMember(member);
+    setPoints(member.points);
+    setShowSetPointsDialog(true);
+  };
+
+  const handleSetPoints = async () => {
+    try {
+      const response = await userService.setPoints(selectedMember._id, points);
+      if (response.success) {
+        await loadMembers();
+        setShowSetPointsDialog(false);
+        setSelectedMember(null);
+        toast.success('تم تحديد النقاط بنجاح');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'فشل في تحديد النقاط');
+    }
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -366,6 +388,10 @@ export function MembersPanel() {
                           <Edit className="w-4 h-4 ml-2" />
                           تعديل العضو
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openSetPointsDialog(member)}>
+                          <TrendingUp className="w-4 h-4 ml-2" />
+                          تحديد النقاط
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openDeleteDialog(member)} className="text-red-600">
                           <Trash2 className="w-4 h-4 ml-2" />
                           حذف العضو
@@ -525,6 +551,38 @@ export function MembersPanel() {
             </Button>
             <Button onClick={handleDeleteMember} className="bg-red-600 hover:bg-red-700">
               حذف
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Set Points Dialog */}
+      <Dialog open={showSetPointsDialog} onOpenChange={setShowSetPointsDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تحديد نقاط العضو</DialogTitle>
+            <DialogDescription>
+              أدخل النقاط الجديدة للعضو "{selectedMember?.name}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="points">النقاط</Label>
+              <Input
+                id="points"
+                type="number"
+                value={points}
+                onChange={(e) => setPoints(parseInt(e.target.value))}
+                placeholder="أدخل النقاط"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSetPointsDialog(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={handleSetPoints} className="bg-[#4285f4]">
+              حفظ
             </Button>
           </DialogFooter>
         </DialogContent>

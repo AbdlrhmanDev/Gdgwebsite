@@ -38,6 +38,13 @@ export const userService = {
     return response.data;
   },
 
+  async setPoints(userId: string, points: number) {
+    const response = await api.put(`/users/${userId}/points`, {
+      points,
+    });
+    return response.data;
+  },
+
   async awardBadge(userId: string, badgeId: string) {
     const response = await api.post(`/users/${userId}/badges`, {
       badgeId,

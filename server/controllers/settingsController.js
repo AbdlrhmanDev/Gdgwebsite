@@ -1,17 +1,27 @@
 const Settings = require('../models/Settings');
 
-// @desc    Get settings
+// @desc    Get all settings
 // @route   GET /api/settings
 // @access  Private (Admin only)
 exports.getSettings = async (req, res) => {
   try {
-    let settings = await Settings.findOne();
-    if (!settings) {
-      settings = await Settings.create({});
-    }
-    res.status(200).json({ success: true, data: settings });
+    const settings = await Settings.find();
+    
+    // Convert array of settings to a key-value object
+    const settingsObj = settings.reduce((acc, setting) => {
+      acc[setting.key] = setting.value;
+      return acc;
+    }, {});
+    
+    res.status(200).json({
+      success: true,
+      data: settingsObj
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 
@@ -20,17 +30,24 @@ exports.getSettings = async (req, res) => {
 // @access  Private (Admin only)
 exports.updateSettings = async (req, res) => {
   try {
-    let settings = await Settings.findOne();
-    if (!settings) {
-      settings = await Settings.create(req.body);
-    } else {
-      settings = await Settings.findByIdAndUpdate(settings._id, req.body, {
-        new: true,
-        runValidators: true,
-      });
+    const settings = req.body;
+    
+    for (const key in settings) {
+      await Settings.findOneAndUpdate(
+        { key },
+        { value: settings[key] },
+        { upsert: true, new: true, runValidators: true }
+      );
     }
-    res.status(200).json({ success: true, data: settings });
+    
+    res.status(200).json({
+      success: true,
+      message: 'Settings updated successfully'
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };

@@ -1,6 +1,7 @@
 const Registration = require('../models/Registration');
 const Event = require('../models/Event');
 const User = require('../models/User');
+const Settings = require('../models/Settings');
 
 // @desc    Register for event
 // @route   POST /api/registrations
@@ -188,7 +189,9 @@ exports.markAttendance = async (req, res) => {
     // Award points to user
     const user = await User.findById(registration.user);
     if (user) {
-      user.points += 50; // Attendance points
+      const attendancePointsSetting = await Settings.findOne({ key: 'attendancePoints' });
+      const attendancePoints = attendancePointsSetting ? attendancePointsSetting.value : 50;
+      user.points += attendancePoints;
       user.calculateLevel();
       await user.save();
     }
