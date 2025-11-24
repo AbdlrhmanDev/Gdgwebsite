@@ -140,7 +140,7 @@ export function Events({ events, lang, userEmail = '', userRole = 'user', isLogg
                       </div>
                       <div>
                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">{lang === 'ar' ? 'التاريخ' : 'Date'}</p>
-                         <p className="text-sm font-medium text-foreground">{event.date}</p>
+                         <p className="text-sm font-medium text-foreground">{new Date(event.date).toLocaleDateString()}</p>
                       </div>
                     </div>
                     

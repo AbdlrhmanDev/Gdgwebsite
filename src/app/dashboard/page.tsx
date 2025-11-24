@@ -88,8 +88,8 @@ export default function DashboardPage({
         </>
       )}
 
-      {/* Admin (مدير) - Full access */}
-      {userRole === 'admin' && (
+      {/* Admin & Leader - Full access */}
+      {(userRole === 'admin' || userRole === 'leader') && (
         <>
           {dashboardView === 'overview' && <DashboardOverview />}
           {dashboardView === 'events' && (
@@ -98,7 +98,8 @@ export default function DashboardPage({
               onAddEvent={onAddEvent}
               onEditEvent={onEditEvent}
               onDeleteEvent={onDeleteEvent}
-              isAdmin={true}
+              isAdmin={userRole === 'admin'}
+              userRole={userRole}
             />
           )}
           {dashboardView === 'analytics' && <AnalyticsDashboard />}

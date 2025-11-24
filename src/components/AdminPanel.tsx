@@ -31,9 +31,10 @@ interface AdminPanelProps {
   onEditEvent: (id: string, event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => void;
   onDeleteEvent: (id: string) => void;
   isAdmin: boolean;
+  userRole: 'admin' | 'leader' | 'member' | 'user';
 }
 
-export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isAdmin }: AdminPanelProps) {
+export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isAdmin, userRole }: AdminPanelProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -45,7 +46,7 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     location: "",
     capacity: "50",
     image: "",
-    status: "قريباً",
+    status: "upcoming",
     color: "#4285f4",
     description: "",
     tags: [] as string[],
@@ -72,7 +73,9 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     
     const eventData = {
       ...formData,
-      capacity: parseInt(formData.capacity) || 0
+      capacity: parseInt(formData.capacity) || 0,
+      date: new Date(formData.date).toISOString(),
+      registrationMethod: formData.registrationMethod.method
     };
 
     if (editingEvent) {
@@ -89,12 +92,12 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     setEditingEvent(event);
     setFormData({
       title: event.title,
-      date: event.date,
+      date: event.date ? new Date(event.date).toISOString().split('T')[0] : '',
       time: event.time,
       location: event.location,
       capacity: event.capacity.toString(),
       image: event.image,
-      status: event.status,
+      status: event.status || 'upcoming',
       color: event.color,
       description: event.description || "",
       tags: event.tags || [] as string[],
@@ -120,7 +123,7 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
       location: "",
       capacity: "50",
       image: "",
-      status: "قريباً",
+      status: "upcoming",
       color: "#4285f4",
       description: "",
       tags: [] as string[],
@@ -132,13 +135,19 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     setEditingEvent(null);
   };
 
+  const getTitle = () => {
+    if (isAdmin) return "المدير";
+    if (userRole === 'leader') return "القائد";
+    return "العضو";
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
-            لوحة {isAdmin ? "المدير" : "العضو"}
+            لوحة {getTitle()}
           </h2>
           <p className="text-muted-foreground mt-1">إدارة وتنظيم فعاليات مجتمع GDG</p>
         </div>
@@ -180,10 +189,10 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                     <Label htmlFor="date">التاريخ</Label>
                     <Input
                       id="date"
-                      type="text"
+                      type="date"
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      placeholder="25 نوفمبر 2025"
+                      placeholder="2025-11-25"
                       required
                       className="bg-muted/50"
                     />
@@ -260,10 +269,10 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                       className="w-full px-3 py-2 bg-muted/50 border border-input rounded-md text-sm"
                       required
                     >
-                      <option value="قريباً">قريباً</option>
-                      <option value="التسجيل مفتوح">التسجيل مفتوح</option>
-                      <option value="اكتمل العدد">اكتمل العدد</option>
-                      <option value="انتهت">انتهت</option>
+                      <option value="upcoming">قريباً</option>
+                      <option value="ongoing">التسجيل مفتوح</option>
+                      <option value="completed">اكتمل العدد</option>
+                      <option value="cancelled">انتهت</option>
                     </select>
                   </div>
                   <div>
@@ -378,7 +387,7 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-primary" />
-                          <span>{event.date} • {event.time}</span>
+                          <span>{new Date(event.date).toLocaleDateString()} • {event.time}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-primary" />
@@ -407,7 +416,7 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                                 <Edit className="w-4 h-4 ml-2" />
                                 تعديل
                              </DropdownMenuItem>
-                             {isAdmin && (
+                             {(isAdmin || userRole === 'leader') && (
                                 <DropdownMenuItem onClick={() => handleDelete(event.id)} className="text-red-500 focus:text-red-500">
                                     <Trash2 className="w-4 h-4 ml-2" />
                                     حذف

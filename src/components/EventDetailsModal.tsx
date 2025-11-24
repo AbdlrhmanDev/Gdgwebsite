@@ -8,6 +8,7 @@ import { Event } from "../lib/storage";
 import { getRegistrationUrl, getRegistrationButtonText, getRegistrationMethodIcon } from "../lib/registration-methods";
 import { registrationService } from "../services/registrationService";
 import { eventService } from "../services/eventService";
+import { toast } from "sonner";
 
 interface EventDetailsModalProps {
   event: Event;
@@ -62,7 +63,7 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
 
   const handleRegister = async () => {
     if (userRole === 'user') {
-      alert('يجب أن تكون عضواً للتسجيل في الفعاليات. يرجى إنشاء حساب عضو.');
+      toast.error('يجب أن تكون عضواً للتسجيل في الفعاليات. يرجى إنشاء حساب عضو.');
       return;
     }
 
@@ -72,7 +73,7 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
       window.open(url, '_blank');
       
       // إظهار رسالة توجيه
-      alert('سيتم فتح نموذج التسجيل في نافذة جديدة. يرجى ملء البيانات المطلوبة.');
+      toast.info('سيتم فتح نموذج التسجيل في نافذة جديدة. يرجى ملء البيانات المطلوبة.');
       return;
     }
 
@@ -101,7 +102,7 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
     } catch (error: any) {
       console.error('Registration failed:', error);
       const message = error.response?.data?.message || 'فشل التسجيل. يرجى المحاولة مرة أخرى.';
-      alert(message);
+      toast.error(message);
     } finally {
       setIsRegistering(false);
     }
@@ -149,7 +150,7 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
                   <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm text-muted-foreground">التاريخ</p>
-                    <p className="font-medium text-foreground">{event.date}</p>
+                    <p className="font-medium text-foreground">{new Date(event.date).toLocaleDateString()}</p>
                   </div>
                 </div>
 

@@ -56,7 +56,7 @@ const eventSchema = new mongoose.Schema({
   },
   registrationMethod: {
     type: String,
-    enum: ['google-forms', 'typeform', 'microsoft-forms', 'eventbrite', 'airtable', 'custom'],
+    enum: ['google-forms', 'typeform', 'microsoft-forms', 'eventbrite', 'airtable', 'custom', 'internal'],
     default: 'google-forms'
   },
   registrationUrl: {
