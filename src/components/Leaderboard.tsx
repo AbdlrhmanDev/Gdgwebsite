@@ -122,10 +122,10 @@ export function Leaderboard({ lang }: LeaderboardProps) {
               >
                 <Card className="border-border/50 bg-card/50 overflow-hidden shadow-xl">
                   <CardContent className="p-8 md:p-12">
-                    <div className="flex items-end justify-center gap-4 md:gap-8">
+                    <div className="flex flex-col items-center justify-center gap-8 md:flex-row md:items-end">
                       {/* 2nd Place */}
                       {topThree[1] && (
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-center order-2 md:order-1">
                           <div className="relative mb-4">
                             <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-4 ring-gray-300/50">
                               {topThree[1].user.name.charAt(0).toUpperCase()}
@@ -136,9 +136,6 @@ export function Leaderboard({ lang }: LeaderboardProps) {
                           </div>
                           <div className="bg-gradient-to-br from-gray-300/20 to-gray-500/20 px-6 py-8 rounded-t-2xl text-center min-w-[140px] border-t-4 border-gray-400">
                             <h3 className="font-bold text-lg mb-1 truncate max-w-[120px]">{topThree[1].user.name}</h3>
-                            <Badge style={{ backgroundColor: getRoleColor(topThree[1].user.role) }} className="mb-2 text-xs">
-                              {getRoleLabel(topThree[1].user.role)}
-                            </Badge>
                             <p className="text-2xl font-bold text-foreground mb-1">{topThree[1].points}</p>
                             <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'نقطة' : 'points'}</p>
                             <div className="mt-2 text-xs text-muted-foreground">
@@ -150,7 +147,7 @@ export function Leaderboard({ lang }: LeaderboardProps) {
 
                       {/* 1st Place */}
                       {topThree[0] && (
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-center order-1 md:order-2">
                           <div className="relative mb-4">
                             <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-3xl shadow-2xl ring-4 ring-yellow-400/50 animate-pulse">
                               {topThree[0].user.name.charAt(0).toUpperCase()}
@@ -161,9 +158,6 @@ export function Leaderboard({ lang }: LeaderboardProps) {
                           </div>
                           <div className="bg-gradient-to-br from-yellow-400/20 to-orange-500/20 px-8 py-12 rounded-t-2xl text-center min-w-[160px] border-t-4 border-yellow-500">
                             <h3 className="font-bold text-xl mb-1 truncate max-w-[140px]">{topThree[0].user.name}</h3>
-                            <Badge style={{ backgroundColor: getRoleColor(topThree[0].user.role) }} className="mb-3">
-                              {getRoleLabel(topThree[0].user.role)}
-                            </Badge>
                             <p className="text-3xl font-bold text-foreground mb-1">{topThree[0].points}</p>
                             <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'نقطة' : 'points'}</p>
                             <div className="mt-3 text-sm text-muted-foreground">
@@ -175,7 +169,7 @@ export function Leaderboard({ lang }: LeaderboardProps) {
 
                       {/* 3rd Place */}
                       {topThree[2] && (
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-center order-3 md:order-3">
                           <div className="relative mb-4">
                             <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-4 ring-orange-400/50">
                               {topThree[2].user.name.charAt(0).toUpperCase()}
@@ -186,9 +180,6 @@ export function Leaderboard({ lang }: LeaderboardProps) {
                           </div>
                           <div className="bg-gradient-to-br from-orange-400/20 to-red-500/20 px-6 py-6 rounded-t-2xl text-center min-w-[140px] border-t-4 border-orange-500">
                             <h3 className="font-bold text-lg mb-1 truncate max-w-[120px]">{topThree[2].user.name}</h3>
-                            <Badge style={{ backgroundColor: getRoleColor(topThree[2].user.role) }} className="mb-2 text-xs">
-                              {getRoleLabel(topThree[2].user.role)}
-                            </Badge>
                             <p className="text-2xl font-bold text-foreground mb-1">{topThree[2].points}</p>
                             <p className="text-sm text-muted-foreground">{lang === 'ar' ? 'نقطة' : 'points'}</p>
                             <div className="mt-2 text-xs text-muted-foreground">
@@ -233,9 +224,6 @@ export function Leaderboard({ lang }: LeaderboardProps) {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <h3 className="font-semibold text-foreground truncate">{user.user.name}</h3>
-                                <Badge style={{ backgroundColor: getRoleColor(user.user.role) }} className="text-xs flex-shrink-0">
-                                  {getRoleLabel(user.user.role)}
-                                </Badge>
                               </div>
                               {user.user.department && user.user.department !== 'none' && (
                                 <p className="text-xs text-muted-foreground truncate">

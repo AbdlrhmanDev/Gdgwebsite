@@ -57,6 +57,9 @@ export default function HomePage({
         <section id="about">
           <About lang={currentLang} />
         </section>
+        <section id="leaderboard">
+          <Leaderboard lang={currentLang} />
+        </section>
         <section id="events">
           <Events 
             events={events} 
@@ -69,9 +72,6 @@ export default function HomePage({
         </section>
         <section id="team">
           <Team lang={currentLang} />
-        </section>
-        <section id="leaderboard">
-          <Leaderboard lang={currentLang} />
         </section>
         <section id="contact">
           <Contact lang={currentLang} />

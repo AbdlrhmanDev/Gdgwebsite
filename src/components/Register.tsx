@@ -86,15 +86,14 @@ export function Register({ onRegister, onBackToLogin }: RegisterProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="studentId" className="text-gray-300">الرقم الجامعي</Label>
+                <Label htmlFor="studentId" className="text-gray-300" > الرقم الجامعي</Label>
                 <div className="relative">
                     <CreditCard className="absolute right-3 top-3 w-4 h-4 text-gray-500" />
                     <Input
                         id="studentId"
                         value={formData.studentId}
                         onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                        placeholder="2024001234"
-                        required
+                        placeholder="اختياري"
                         className="bg-white/5 border-white/10 pr-10 focus:border-[#4285f4] transition-colors"
                     />
                 </div>
@@ -109,7 +108,7 @@ export function Register({ onRegister, onBackToLogin }: RegisterProps) {
                         type="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="student@mustaqbal.edu"
+                        placeholder="example@example.com"
                         required
                         className="bg-white/5 border-white/10 pr-10 focus:border-[#4285f4] transition-colors"
                     />
