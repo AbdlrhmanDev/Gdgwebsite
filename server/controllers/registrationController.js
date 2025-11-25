@@ -249,3 +249,34 @@ exports.addFeedback = async (req, res) => {
     });
   }
 };
+
+// @desc    Delete registration
+// @route   DELETE /api/registrations/:id
+// @access  Private (Admin & Leader)
+exports.deleteRegistration = async (req, res) => {
+  try {
+    const registration = await Registration.findByIdAndDelete(req.params.id);
+
+    if (!registration) {
+      return res.status(404).json({
+        success: false,
+        message: 'Registration not found'
+      });
+    }
+
+    // Update event attendees count
+    await Event.findByIdAndUpdate(registration.event, {
+      $inc: { attendees: -1 }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Registration deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};

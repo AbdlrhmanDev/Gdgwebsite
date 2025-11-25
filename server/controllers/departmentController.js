@@ -150,3 +150,30 @@ exports.addMember = async (req, res) => {
     });
   }
 };
+
+// @desc    Delete department
+// @route   DELETE /api/departments/:id
+// @access  Private (Admin & Leader)
+exports.deleteDepartment = async (req, res) => {
+  try {
+    const department = await Department.findByIdAndDelete(req.params.id);
+
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        message: 'Department not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Department deleted successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+

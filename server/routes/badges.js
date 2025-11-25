@@ -16,6 +16,6 @@ router.route('/')
 router.route('/:id')
   .get(getBadge)
   .put(protect, authorize('admin'), updateBadge)
-  .delete(protect, authorize('admin'), deleteBadge);
+  .delete(protect, authorize('admin', 'leader'), deleteBadge);
 
 module.exports = router;
