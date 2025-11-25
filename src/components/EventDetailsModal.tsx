@@ -124,6 +124,16 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
           </div>
         ) : (
           <>
+            {/* Status Badge at Top */}
+            <div className="absolute top-2 left-2 md:top-3 md:left-3 z-10">
+              <Badge
+                className="text-xs md:text-sm shadow-lg"
+                style={{ backgroundColor: event.color }}
+              >
+                {event.status}
+              </Badge>
+            </div>
+
             <DialogHeader>
               <div className="relative">
                 <ImageWithFallback
@@ -131,12 +141,6 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
                   alt={event.title}
                   className="w-full h-40 md:h-48 object-cover rounded-lg mb-3 md:mb-4"
                 />
-                <Badge
-                  className="absolute top-2 md:top-4 right-2 md:right-4 text-xs md:text-sm"
-                  style={{ backgroundColor: event.color }}
-                >
-                  {event.status}
-                </Badge>
               </div>
               <DialogTitle className="text-xl md:text-2xl text-foreground">{lang === 'ar' ? event.title : event.titleEn || event.title}</DialogTitle>
               <DialogDescription className="sr-only">
