@@ -127,6 +127,7 @@ export default function DashboardPage({
             onEditEvent={onEditEvent}
             onDeleteEvent={onDeleteEvent}
             onCancelRegistration={handleCancelRegistration} // Pass new prop
+            onRegisterForEvent={onRegisterForEvent} // Pass new prop
             isAdmin={userRole === 'admin'}
             userRole={userRole}
             currentUserId={userId} // Pass new prop

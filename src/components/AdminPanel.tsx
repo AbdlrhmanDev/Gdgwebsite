@@ -31,17 +31,15 @@ interface AdminPanelProps {
   onAddEvent: (event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => void;
   onEditEvent: (id: string, event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => void;
   onDeleteEvent: (id: string) => void;
-  onCancelRegistration: (eventId: string) => void; // New prop
+  onCancelRegistration: (eventId: string) => void;
+  onRegisterForEvent: (eventId: string) => void; // New prop for registering
   isAdmin: boolean;
   userRole: 'admin' | 'leader' | 'member' | 'user';
-  currentUserId: string; // New prop
-  userRegistrations: string[]; // New prop: array of event IDs the user is registered for
+  currentUserId: string;
+  userRegistrations: string[];
 }
 
-export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onCancelRegistration, isAdmin, userRole, currentUserId, userRegistrations }: AdminPanelProps) {
-  console.log("AdminPanel - userRole:", userRole);
-  console.log("AdminPanel - currentUserId:", currentUserId);
-  console.log("AdminPanel - userRegistrations:", userRegistrations);
+export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onCancelRegistration, onRegisterForEvent, isAdmin, userRole, currentUserId, userRegistrations }: AdminPanelProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -397,7 +395,6 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onC
               transition={{ delay: index * 0.05 }}
               className="group bg-card border border-border/50 rounded-2xl p-4 hover:shadow-lg hover:border-border transition-all duration-300"
             >
-              {console.log("AdminPanel - event.id:", event.id)}
               <div className="flex flex-col sm:flex-row gap-5">
                 <div className="relative w-full sm:w-32 h-32 rounded-xl overflow-hidden flex-shrink-0">
                     <img
@@ -440,39 +437,57 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onC
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2">
-                       <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                             {(isAdmin || userRole === 'leader') && (
-                                <DropdownMenuItem onClick={() => setViewingRegistrations(event)}>
-                                   <Eye className="w-4 h-4 ml-2" />
-                                   عرض التسجيلات
-                                </DropdownMenuItem>
-                             )}
-                             {(isAdmin || userRole === 'leader') && (
-                                <DropdownMenuItem onClick={() => handleEdit(event)}>
-                                    <Edit className="w-4 h-4 ml-2" />
-                                    تعديل
-                                </DropdownMenuItem>
-                             )}
-                             {(userRole === 'member' && userRegistrations.includes(event.id)) && (
-                                <DropdownMenuItem onClick={() => onCancelRegistration(event.id)} className="text-orange-500 focus:text-orange-500">
-                                    <X className="w-4 h-4 ml-2" />
-                                    إلغاء التسجيل
-                                </DropdownMenuItem>
-                             )}
-                             {(isAdmin || userRole === 'leader') && (
-                                <DropdownMenuItem onClick={() => handleDelete(event.id)} className="text-red-500 focus:text-red-500">
-                                    <Trash2 className="w-4 h-4 ml-2" />
-                                    حذف
-                                </DropdownMenuItem>
-                             )}
-                          </DropdownMenuContent>
-                       </DropdownMenu>
+                       {userRole === 'member' ? (
+                           userRegistrations.includes(event.id) ? (
+                               // Member is registered: show "Registered" button which cancels registration
+                               <Button
+                                   variant="secondary"
+                                   onClick={() => onCancelRegistration(event.id)}
+                                   className="flex items-center gap-1"
+                               >
+                                   <X className="w-4 h-4" />
+                                   مسجل
+                               </Button>
+                           ) : (
+                               // Member is not registered: show "Register" button
+                               <Button
+                                   onClick={() => onRegisterForEvent(event.id)}
+                                   className="flex items-center gap-1 bg-[#4285f4] hover:bg-[#3367d6] shadow-lg shadow-blue-500/20 transition-all hover:scale-105"
+                               >
+                                   <Plus className="w-4 h-4" />
+                                   سجل الآن
+                               </Button>
+                           )
+                       ) : (
+                           // Admin or Leader: show existing dropdown menu
+                           <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                 {(isAdmin || userRole === 'leader') && (
+                                    <DropdownMenuItem onClick={() => setViewingRegistrations(event)}>
+                                       <Eye className="w-4 h-4 ml-2" />
+                                       عرض التسجيلات
+                                    </DropdownMenuItem>
+                                 )}
+                                 {(isAdmin || userRole === 'leader') && (
+                                    <DropdownMenuItem onClick={() => handleEdit(event)}>
+                                        <Edit className="w-4 h-4 ml-2" />
+                                        تعديل
+                                    </DropdownMenuItem>
+                                 )}
+                                 {(isAdmin || userRole === 'leader') && (
+                                    <DropdownMenuItem onClick={() => handleDelete(event.id)} className="text-red-500 focus:text-red-500">
+                                        <Trash2 className="w-4 h-4 ml-2" />
+                                        حذف
+                                    </DropdownMenuItem>
+                                 )}
+                              </DropdownMenuContent>
+                           </DropdownMenu>
+                       )}
                     </div>
                   </div>
                 </div>
