@@ -1,43 +1,30 @@
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 
 const sendEmail = async (options) => {
-    console.log(`Attempting to send email... Host: ${process.env.SMTP_HOST}, Port: ${process.env.SMTP_PORT}, Secure: ${process.env.SMTP_PORT == 465}`);
+    console.log(`Attempting to send email via SendGrid to: ${options.email}`);
 
-    const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: process.env.SMTP_PORT == 465, // true for 465, false for other ports
-        auth: {
-            user: process.env.SMTP_EMAIL,
-            pass: process.env.SMTP_PASSWORD
-        },
-        tls: {
-            ciphers: 'SSLv3'
-        },
-        family: 4 // Force IPv4 to avoid IPv6 connection issues on Render
-    });
-
-    // Verify connection configuration
-    try {
-        await transporter.verify();
-        console.log('SMTP Connection verified successfully');
-    } catch (error) {
-        console.error('SMTP Connection Verification Failed:', error);
-        throw error; // Re-throw to be caught by controller
-    }
+    // Set SendGrid API Key
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
     const message = {
-        from: `${process.env.FROM_NAME} <${process.env.FROM_EMAIL}>`,
         to: options.email,
+        from: process.env.FROM_EMAIL, // Must be a verified sender in SendGrid
         subject: options.subject,
-        text: options.message
+        text: options.message,
     };
 
     console.log('Sending email payload:', JSON.stringify({ ...message, text: '***' }, null, 2));
 
-    const info = await transporter.sendMail(message);
-
-    console.log('Message sent successfully. MessageID: %s', info.messageId);
+    try {
+        const response = await sgMail.send(message);
+        console.log('Email sent successfully via SendGrid. Status:', response[0].statusCode);
+    } catch (error) {
+        console.error('SendGrid Error:', error);
+        if (error.response) {
+            console.error('SendGrid Error Body:', error.response.body);
+        }
+        throw error;
+    }
 };
 
 module.exports = sendEmail;
