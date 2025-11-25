@@ -56,6 +56,8 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     registrationMethod: internalRegistration as RegistrationConfig
   });
 
+  const canAddEvents = isAdmin || userRole === 'admin' || userRole === 'leader';
+
   const colors = [
     { value: "#4285f4", label: "أزرق" },
     { value: "#34a853", label: "أخضر" },
@@ -70,6 +72,9 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canAddEvents) {
+      return;
+    }
     
     const eventData = {
       ...formData,
@@ -152,25 +157,26 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
           <p className="text-muted-foreground mt-1">إدارة وتنظيم فعاليات مجتمع GDG</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#4285f4] hover:bg-[#3367d6] shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
-              <Plus className="w-4 h-4 ml-2" />
-              إضافة فعالية
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
-            <DialogHeader>
-              <DialogTitle>{editingEvent ? "تعديل الفعالية" : "إضافة فعالية جديدة"}</DialogTitle>
-              <DialogDescription>
-                قم بتعبئة البيانات أدناه {editingEvent ? "لتحديث" : "لإنشاء"} الفعالية
-              </DialogDescription>
-            </DialogHeader>
-            
-            <form onSubmit={handleSubmit} className="space-y-6 py-4">
+        {canAddEvents ? (
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#4285f4] hover:bg-[#3367d6] shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
+                <Plus className="w-4 h-4 ml-2" />
+                إضافة فعالية
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
+              <DialogHeader>
+                <DialogTitle>{editingEvent ? "تعديل الفعالية" : "إضافة فعالية جديدة"}</DialogTitle>
+                <DialogDescription>
+                  قم بتعبئة البيانات أدناه {editingEvent ? "لتحديث" : "لإنشاء"} الفعالية
+                </DialogDescription>
+              </DialogHeader>
+              
+              <form onSubmit={handleSubmit} className="space-y-6 py-4">
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="title">عنوان الفعالية</Label>
@@ -320,9 +326,14 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                   {editingEvent ? "تحديث الفعالية" : "إضافة الفعالية"}
                 </Button>
               </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </form>
+            </DialogContent>
+          </Dialog>
+        ) : (
+          <div className="text-sm text-muted-foreground border border-dashed border-border rounded-xl px-4 py-2">
+            لا يمكن لصلاحية العضو إضافة فعاليات جديدة.
+          </div>
+        )}
       </div>
 
       {/* Search and Filter Bar */}
