@@ -8,6 +8,7 @@ import { Contact } from '../components/Contact';
 import { Footer } from "../components/Footer";
 import { type Language } from "../lib/i18n";
 import { type Event } from "../lib/storage";
+import { useEffect } from "react"; // Import useEffect
 
 interface HomePageProps {
   currentLang: Language;
@@ -19,6 +20,8 @@ interface HomePageProps {
   userEmail?: string;
   userRole?: 'admin' | 'member' | 'user';
   isLoggedIn?: boolean;
+  highlightEventId?: string | null; // New prop
+  onClearHighlightEventId?: () => void; // New prop
 }
 
 export default function HomePage({
@@ -30,18 +33,33 @@ export default function HomePage({
   onRefreshEvents,
   userEmail,
   userRole,
-  isLoggedIn
+  isLoggedIn,
+  highlightEventId, // New prop
+  onClearHighlightEventId // New prop
 }: HomePageProps) {
   const t = (key: string) => {
-    // Helper for translation if needed in this file, 
+    // Helper for translation if needed in this file,
     // but components handle their own translation
-    return ""; 
+    return "";
   };
   const publicEvents = events.filter((event) => event.isPublic !== false);
 
+  // Effect to scroll to the highlighted event
+  useEffect(() => {
+    if (highlightEventId) {
+      const eventElement = document.getElementById(`event-${highlightEventId}`);
+      if (eventElement) {
+        eventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Optionally clear the highlight ID after scrolling
+        if (onClearHighlightEventId) {
+          onClearHighlightEventId();
+        }
+      }
+    }
+  }, [highlightEventId, onClearHighlightEventId]);
+
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
-      <Navigation 
+    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-white'}`}>      <Navigation 
         currentLang={currentLang}
         onLanguageToggle={onLanguageToggle}
         isDarkMode={isDarkMode}

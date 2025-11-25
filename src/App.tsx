@@ -4,6 +4,7 @@ import { authService } from "./services/authService";
 import { eventService, type Event as ApiEvent } from "./services/eventService";
 import { userService } from "./services/userService";
 import { badgeService } from "./services/badgeService";
+import { registrationService } from "./services/registrationService"; // Import registrationService
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 
@@ -56,6 +57,7 @@ export default function App() {
   const [isDarkMode] = useState(true); // Always dark mode
   const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [selectedEventIdForHomePage, setSelectedEventIdForHomePage] = useState<string | null>(null); // New state to pass eventId to HomePage
   
   // Load events from API
   const [events, setEvents] = useState<any[]>([]);
@@ -274,11 +276,9 @@ export default function App() {
   };
 
   const handleRegisterForEvent = (eventId: string) => {
-    const event = events.find(e => e.id === eventId);
-    if (event) {
-      // This will be handled by EventDetailsModal internally in components
-      toast(`سيتم توجيهك لصفحة التسجيل في: ${event.title}`);
-    }
+    setSelectedEventIdForHomePage(eventId); // Set the event to highlight on the home page
+    setCurrentRoute('/'); // Navigate to the home page
+    toast(`سيتم توجيهك إلى صفحة الفعالية.`); // Provide user feedback
   };
 
   const renderPage = () => {
@@ -350,10 +350,11 @@ export default function App() {
         onLoginClick={() => setCurrentRoute(isLoggedIn ? '/dashboard' : '/login')}
         onRefreshEvents={() => setRefreshKey(prev => prev + 1)}
         userEmail={userEmail}
-        userRole={userRole}
-        isLoggedIn={isLoggedIn}
-      />
-    );
+                  userRole={userRole}
+                  isLoggedIn={isLoggedIn}
+                  highlightEventId={selectedEventIdForHomePage} // Pass the new prop
+                  onClearHighlightEventId={() => setSelectedEventIdForHomePage(null)} // Pass callback to clear the state
+              />    );
   };
   
   return (

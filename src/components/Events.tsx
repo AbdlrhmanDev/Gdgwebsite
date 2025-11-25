@@ -98,6 +98,7 @@ export function Events({ events, lang, userEmail = '', userRole = 'user', isLogg
             displayEvents.map((event, index) => (
               <motion.div
                 key={event.id}
+                id={`event-${event.id}`} // Add this line
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
