@@ -218,18 +218,20 @@ exports.forgotPassword = async (req, res) => {
 
     try {
       // const sendEmail = require('../utils/sendEmail'); // Moved to top
+      console.log(`Preparing to send password reset email to: ${user.email}`);
       await sendEmail({
         email: user.email,
         subject: 'Password Reset Token',
         message
       });
+      console.log('Password reset email sent successfully');
 
       res.status(200).json({
         success: true,
         data: 'Email sent'
       });
     } catch (err) {
-      console.log(err);
+      console.error('Failed to send password reset email:', err);
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
 
