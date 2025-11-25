@@ -157,6 +157,11 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onC
     return "العضو";
   };
 
+  const handleEventClick = (event: Event) => {
+    // Optional: Add any event click logic here if needed
+    console.log("Event clicked:", event.id);
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -449,7 +454,10 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onC
                                // Member is registered: show "Registered" button which cancels registration
                                <Button
                                    variant="secondary"
-                                   onClick={() => onCancelRegistration(event.id)}
+                                   onClick={(e) => {
+                                       e.stopPropagation();
+                                       onCancelRegistration(event.id);
+                                   }}
                                    className="flex items-center gap-1"
                                >
                                    <X className="w-4 h-4" />
@@ -458,7 +466,10 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onC
                            ) : (
                                // Member is not registered: show "Register" button
                                <Button
-                                   onClick={() => onRegisterForEvent(event.id)}
+                                   onClick={(e) => {
+                                       e.stopPropagation();
+                                       onRegisterForEvent(event.id);
+                                   }}
                                    className="flex items-center gap-1 bg-[#4285f4] hover:bg-[#3367d6] shadow-lg shadow-blue-500/20 transition-all hover:scale-105"
                                >
                                    <Plus className="w-4 h-4" />
@@ -469,7 +480,12 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onC
                            // Admin or Leader: show existing dropdown menu
                            <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
                                     <MoreVertical className="w-4 h-4" />
                                 </Button>
                               </DropdownMenuTrigger>

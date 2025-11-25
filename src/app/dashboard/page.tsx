@@ -81,9 +81,30 @@ export default function DashboardPage({
     if (userId) {
       const fetchMyRegistrations = async () => {
         try {
-          const registrations = await registrationService.getMyRegistrations();
-          setMyRegistrations(registrations);
-          setRegisteredEventIds(registrations.map((reg: UserRegistration) => reg.eventId));
+          const response = await registrationService.getMyRegistrations();
+          console.log("Dashboard - Full API Response:", response);
+          
+          // Handle response structure - API returns { success, data }
+          const registrations = response.success ? response.data : response;
+          console.log("Dashboard - Registrations:", registrations);
+          
+          // Filter out cancelled registrations
+          const activeRegistrations = registrations.filter((reg: any) => 
+            reg.status !== 'cancelled'
+          );
+          console.log("Dashboard - Active Registrations (not cancelled):", activeRegistrations);
+          
+          setMyRegistrations(activeRegistrations);
+          
+          // Extract event IDs - handle both eventId and event._id
+          const eventIds = activeRegistrations.map((reg: any) => {
+            const id = reg.event?._id || reg.eventId || reg.event?.id;
+            console.log("Dashboard - Mapping registration:", reg, "to eventId:", id);
+            return id;
+          }).filter(Boolean); // Remove any undefined values
+          
+          console.log("Dashboard - Registered Event IDs:", eventIds);
+          setRegisteredEventIds(eventIds);
         } catch (error) {
           console.error("Error fetching user registrations:", error);
         }
@@ -93,25 +114,83 @@ export default function DashboardPage({
   }, [userId]); // Re-fetch when userId changes
 
   const handleCancelRegistration = async (eventId: string) => {
+    console.log("Attempting to delete registration for event:", eventId);
+    console.log("Current registrations:", myRegistrations);
+    console.log("Current registered event IDs:", registeredEventIds);
+    
     if (window.confirm("هل أنت متأكد من إلغاء تسجيلك لهذه الفعالية؟")) {
       try {
-        const registrationToCancel = myRegistrations.find(
-          (reg) => reg.eventId === eventId && reg.userId === userId
-        );
+        // Find registration by checking multiple possible event ID locations
+        const registrationToDelete = myRegistrations.find((reg: any) => {
+          const regEventId = reg.event?._id || reg.eventId || reg.event?.id;
+          console.log("Comparing:", regEventId, "with", eventId);
+          return regEventId === eventId;
+        });
 
-        if (registrationToCancel) {
-          await registrationService.cancelRegistration(registrationToCancel._id);
-          // After successful cancellation, refetch registrations to update the UI
-          const updatedRegistrations = await registrationService.getMyRegistrations();
+        console.log("Found registration to delete:", registrationToDelete);
+
+        if (registrationToDelete) {
+          // Use cancel endpoint which now deletes the registration
+          const deleteResponse = await registrationService.cancelRegistration(registrationToDelete._id);
+          console.log("Delete response:", deleteResponse);
+          
+          // After successful deletion, refetch registrations to update the UI
+          const response = await registrationService.getMyRegistrations();
+          console.log("Refetch response after delete:", response);
+          
+          const updatedRegistrations = response.success ? response.data : response;
+          console.log("Updated registrations:", updatedRegistrations);
+          
+          // No need to filter - registrations are deleted now
           setMyRegistrations(updatedRegistrations);
-          setRegisteredEventIds(updatedRegistrations.map((reg: UserRegistration) => reg.eventId));
-          console.log(`Registration for event ${eventId} cancelled successfully.`);
+          
+          const eventIds = updatedRegistrations.map((reg: any) => 
+            reg.event?._id || reg.eventId || reg.event?.id
+          ).filter(Boolean);
+          
+          console.log("New registered event IDs after delete:", eventIds);
+          setRegisteredEventIds(eventIds);
+          
+          console.log(`Registration for event ${eventId} deleted successfully.`);
+          alert("تم إلغاء التسجيل بنجاح");
         } else {
-          console.warn(`Could not find registration for event ${eventId} by user ${userId}.`);
+          console.warn(`Could not find registration for event ${eventId}`);
+          console.warn("Available event IDs:", myRegistrations.map((reg: any) => 
+            reg.event?._id || reg.eventId || reg.event?.id
+          ));
+          alert("لم يتم العثور على التسجيل");
         }
       } catch (error) {
-        console.error("Error cancelling registration:", error);
+        console.error("Error deleting registration:", error);
+        alert("فشل إلغاء التسجيل");
       }
+    }
+  };
+
+  const handleRegisterForEvent = async (eventId: string) => {
+    try {
+      // Call the original onRegisterForEvent
+      await onRegisterForEvent(eventId);
+      
+      // Refetch registrations to update the UI
+      const response = await registrationService.getMyRegistrations();
+      const updatedRegistrations = response.success ? response.data : response;
+      
+      // Filter out cancelled registrations
+      const activeRegistrations = updatedRegistrations.filter((reg: any) => 
+        reg.status !== 'cancelled'
+      );
+      
+      setMyRegistrations(activeRegistrations);
+      
+      const eventIds = activeRegistrations.map((reg: any) => 
+        reg.event?._id || reg.eventId || reg.event?.id
+      ).filter(Boolean);
+      setRegisteredEventIds(eventIds);
+      
+      console.log(`Registered for event ${eventId} successfully.`);
+    } catch (error) {
+      console.error("Error registering for event:", error);
     }
   };
 
@@ -127,7 +206,7 @@ export default function DashboardPage({
             onEditEvent={onEditEvent}
             onDeleteEvent={onDeleteEvent}
             onCancelRegistration={handleCancelRegistration} // Pass new prop
-            onRegisterForEvent={onRegisterForEvent} // Pass new prop
+            onRegisterForEvent={handleRegisterForEvent} // Pass wrapped handler
             isAdmin={userRole === 'admin'}
             userRole={userRole}
             currentUserId={userId} // Pass new prop

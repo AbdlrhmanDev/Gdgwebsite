@@ -30,6 +30,11 @@ export const registrationService = {
     return response.data;
   },
 
+  async deleteRegistration(id: string) {
+    const response = await api.delete(`/registrations/${id}`);
+    return response.data;
+  },
+
   async markAttendance(id: string) {
     const response = await api.put(`/registrations/${id}/attend`);
     return response.data;

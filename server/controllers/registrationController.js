@@ -2,6 +2,7 @@ const Registration = require('../models/Registration');
 const Event = require('../models/Event');
 const User = require('../models/User');
 const Settings = require('../models/Settings');
+const mongoose = require('mongoose');
 
 // @desc    Register for event
 // @route   POST /api/registrations
@@ -145,19 +146,31 @@ exports.cancelRegistration = async (req, res) => {
       });
     }
     
-    registration.status = 'cancelled';
-    registration.cancellationReason = cancellationReason;
-    await registration.save();
+    // Delete the registration instead of marking it as cancelled
+    await Registration.findByIdAndDelete(req.params.id);
     
     // Update event attendees count
     await Event.findByIdAndUpdate(registration.event, {
       $inc: { attendees: -1 }
     });
     
+    // Remove event from user's eventsAttended array
+    const userId = registration.user;
+    const eventId = registration.event;
+    console.log('Removing event from user:', { userId, eventId });
+    
+    const updateResult = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { eventsAttended: eventId } },
+      { new: true }
+    );
+    
+    console.log('User update result:', updateResult?.eventsAttended);
+    
     res.status(200).json({
       success: true,
-      message: 'Registration cancelled successfully',
-      data: registration
+      message: 'Registration deleted successfully',
+      data: null
     });
   } catch (error) {
     res.status(500).json({
