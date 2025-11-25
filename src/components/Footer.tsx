@@ -57,22 +57,7 @@ export function Footer({ lang }: FooterProps) {
           </div>
 
           {/* Resources */}
-          <div>
-            <h3 className="text-lg font-semibold mb-6 text-white">{lang === 'ar' ? 'المصادر' : 'Resources'}</h3>
-            <ul className="space-y-3">
-              {["Code of Conduct", "FAQs", "Blog", "Gallery", "Partners"].map((item) => (
-                <li key={item}>
-                  <a
-                    href="#"
-                    className="text-gray-400 hover:text-[#34a853] transition-colors text-sm block transform hover:translate-x-1 rtl:hover:-translate-x-1 duration-300"
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
+          
           {/* Contact Info */}
           <div>
             <h3 className="text-lg font-semibold mb-6 text-white">{lang === 'ar' ? 'اتصل بنا' : 'Contact'}</h3>
@@ -81,7 +66,7 @@ export function Footer({ lang }: FooterProps) {
                 <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#ea4335]/20 transition-colors">
                     <Mail className="w-4 h-4 group-hover:text-[#ea4335] transition-colors" />
                 </div>
-                <span className="mt-1.5">gdg@mustaqbal.edu</span>
+                <span className="mt-1.5">gdg.uom2025@gmail.com</span>
               </li>
               <li className="flex items-start gap-3 text-sm text-gray-400 group">
                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#f9ab00]/20 transition-colors">
