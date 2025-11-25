@@ -72,7 +72,7 @@ export function Footer({ lang }: FooterProps) {
                  <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#f9ab00]/20 transition-colors">
                     <MapPin className="w-4 h-4 group-hover:text-[#f9ab00] transition-colors" />
                 </div>
-                <span className="mt-1.5">Mustaqbal University, Student Center</span>
+                <span className="mt-1.5">Mustaqbal University</span>
               </li>
             </ul>
           </div>
