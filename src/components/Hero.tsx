@@ -94,7 +94,7 @@ export function Hero({ lang, onLoginClick, isLoggedIn }: HeroProps) {
           className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-foreground mb-6 leading-[1.1]"
         >
           {lang === 'ar' ? (
-             <>حيث يلتقي <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4285f4] via-[#34a853] via-[#f9ab00] to-[#ea4335]">الكود</span><br/>بالمجتمع الإبداعي.</>
+             <>حيث تلتقي <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4285f4] via-[#34a853] via-[#f9ab00] to-[#ea4335]">البرمجة</span><br/>بالمجتمع الإبداعي.</>
           ) : (
              <>Where <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4285f4] via-[#34a853] via-[#f9ab00] to-[#ea4335]">Code</span><br/>Meets Community.</>
           )}
