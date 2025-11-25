@@ -18,7 +18,7 @@ interface HomePageProps {
   onLoginClick: () => void;
   onRefreshEvents: () => void;
   userEmail?: string;
-  userRole?: 'admin' | 'member' | 'user';
+  userRole?: 'admin' | 'member' | 'user' | 'leader';
   isLoggedIn?: boolean;
   highlightEventId?: string | null; // New prop
   onClearHighlightEventId?: () => void; // New prop
@@ -59,15 +59,15 @@ export default function HomePage({
   }, [highlightEventId, onClearHighlightEventId]);
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-white'}`}>      <Navigation 
-        currentLang={currentLang}
-        onLanguageToggle={onLanguageToggle}
-        isDarkMode={isDarkMode}
-      />
-      
+    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-white'}`}>      <Navigation
+      currentLang={currentLang}
+      onLanguageToggle={onLanguageToggle}
+      isDarkMode={isDarkMode}
+    />
+
       <main>
         <section id="home">
-          <Hero 
+          <Hero
             lang={currentLang}
             onLoginClick={onLoginClick}
             isLoggedIn={isLoggedIn || false}
@@ -80,8 +80,8 @@ export default function HomePage({
           <Leaderboard lang={currentLang} />
         </section>
         <section id="events">
-          <Events 
-            events={publicEvents} 
+          <Events
+            events={publicEvents}
             lang={currentLang}
             userEmail={userEmail}
             userRole={userRole}

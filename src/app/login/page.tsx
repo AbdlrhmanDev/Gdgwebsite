@@ -2,14 +2,16 @@ import { Login } from "../../components/Login";
 
 interface LoginPageProps {
   onLogin: (email: string, password: string) => void;
-  onRegisterClick: () => void;
+  onRegister: () => void;
+  onForgotPassword: () => void;
 }
 
-export default function LoginPage({ onLogin, onRegisterClick }: LoginPageProps) {
+export default function LoginPage({ onLogin, onRegister, onForgotPassword }: LoginPageProps) {
   return (
     <Login
       onLogin={onLogin}
-      onRegister={onRegisterClick}
+      onRegister={onRegister}
+      onForgotPassword={onForgotPassword}
     />
   );
 }

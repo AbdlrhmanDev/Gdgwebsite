@@ -9,9 +9,10 @@ import { motion } from "motion/react";
 interface LoginProps {
   onLogin: (email: string, password: string) => void;
   onRegister: () => void;
+  onForgotPassword: () => void;
 }
 
-export function Login({ onLogin, onRegister }: LoginProps) {
+export function Login({ onLogin, onRegister, onForgotPassword }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +57,7 @@ export function Login({ onLogin, onRegister }: LoginProps) {
               اختر نوع الحساب وسجل دخولك إلى مجتمع GDG
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-4">
@@ -78,7 +79,16 @@ export function Login({ onLogin, onRegister }: LoginProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-gray-300">كلمة المرور</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-gray-300">كلمة المرور</Label>
+                    <button
+                      type="button"
+                      onClick={onForgotPassword}
+                      className="text-xs text-[#4285f4] hover:text-[#5d9af8] hover:underline transition-colors"
+                    >
+                      نسيت كلمة المرور؟
+                    </button>
+                  </div>
                   <div className="relative">
                     <Lock className="absolute right-3 top-3 w-4 h-4 text-gray-500" />
                     <Input

@@ -13,6 +13,8 @@ import HomePage from "./app/page";
 import LoginPage from "./app/login/page";
 import RegisterPage from "./app/register/page";
 import DashboardPage from "./app/dashboard/page";
+import ForgotPasswordPage from "./app/forgot-password/page";
+import ResetPasswordPage from "./app/reset-password/page";
 
 export type UserRole = 'admin' | 'member' | 'user' | 'leader';
 
@@ -47,7 +49,7 @@ export default function App() {
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
     return window.location.pathname || '/';
   });
-  
+
   // App State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('user');
@@ -58,7 +60,7 @@ export default function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedEventIdForHomePage, setSelectedEventIdForHomePage] = useState<string | null>(null); // New state to pass eventId to HomePage
-  
+
   // Load events from API
   const [events, setEvents] = useState<any[]>([]);
   const [gamificationData, setGamificationData] = useState({
@@ -78,7 +80,7 @@ export default function App() {
     const handlePopState = () => {
       setCurrentRoute(window.location.pathname || '/');
     };
-    
+
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
@@ -107,14 +109,14 @@ export default function App() {
       const userResponse = await userService.getUser(userId);
       if (userResponse.success) {
         const userData = userResponse.data;
-        
+
         // Fetch user rank
         const rankResponse = await userService.getUserRank(userId);
         let userRank = 0;
         if (rankResponse.success) {
           userRank = rankResponse.data.rank;
         }
-        
+
         // Fetch user badges
         const badgesResponse = await badgeService.getBadges();
         let userBadges: any[] = [];
@@ -128,7 +130,7 @@ export default function App() {
             earnedDate: userData.badges?.includes(badge._id) ? badge.createdAt : undefined
           }));
         }
-        
+
         setGamificationData({
           userPoints: userData.points || 0,
           userLevel: userData.level || 1,
@@ -172,7 +174,7 @@ export default function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
-  
+
   // Add smooth scroll
   useEffect(() => {
     document.documentElement.classList.add('smooth-scroll');
@@ -185,7 +187,7 @@ export default function App() {
   const handleLogin = async (email: string, password: string) => {
     try {
       const response = await authService.login({ email, password });
-      
+
       if (response.success) {
         toast.success('تم تسجيل الدخول بنجاح!');
         setIsLoggedIn(true);
@@ -210,7 +212,7 @@ export default function App() {
         studentId,
         department: 'none',
       });
-      
+
       if (response.success) {
         toast.success(`تم التسجيل بنجاح! مرحباً ${name}`);
         setIsLoggedIn(true);
@@ -313,7 +315,26 @@ export default function App() {
       return (
         <LoginPage
           onLogin={handleLogin}
-          onRegisterClick={() => setCurrentRoute('/register')}
+          onRegister={() => setCurrentRoute('/register')}
+          onForgotPassword={() => setCurrentRoute('/forgot-password')}
+        />
+      );
+    }
+
+    if (currentRoute === '/forgot-password') {
+      return (
+        <ForgotPasswordPage
+          onBack={() => setCurrentRoute('/login')}
+        />
+      );
+    }
+
+    if (currentRoute.startsWith('/reset-password/')) {
+      const token = currentRoute.split('/reset-password/')[1];
+      return (
+        <ResetPasswordPage
+          token={token}
+          onSuccess={() => setCurrentRoute('/login')}
         />
       );
     }
@@ -350,13 +371,13 @@ export default function App() {
         onLoginClick={() => setCurrentRoute(isLoggedIn ? '/dashboard' : '/login')}
         onRefreshEvents={() => setRefreshKey(prev => prev + 1)}
         userEmail={userEmail}
-                  userRole={userRole}
-                  isLoggedIn={isLoggedIn}
-                  highlightEventId={selectedEventIdForHomePage} // Pass the new prop
-                  onClearHighlightEventId={() => setSelectedEventIdForHomePage(null)} // Pass callback to clear the state
-              />    );
+        userRole={userRole}
+        isLoggedIn={isLoggedIn}
+        highlightEventId={selectedEventIdForHomePage} // Pass the new prop
+        onClearHighlightEventId={() => setSelectedEventIdForHomePage(null)} // Pass callback to clear the state
+      />);
   };
-  
+
   return (
     <>
       <Toaster richColors position="bottom-right" />

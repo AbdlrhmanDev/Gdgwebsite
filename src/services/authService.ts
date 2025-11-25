@@ -33,23 +33,23 @@ export interface AuthResponse {
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await api.post('/auth/login', credentials);
-    
+
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    
+
     return response.data;
   },
 
   async register(data: RegisterData): Promise<AuthResponse> {
     const response = await api.post('/auth/register', data);
-    
+
     if (response.data.success) {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    
+
     return response.data;
   },
 
@@ -63,6 +63,20 @@ export const authService = {
       currentPassword,
       newPassword,
     });
+    return response.data;
+  },
+
+  async forgotPassword(email: string) {
+    const response = await api.post('/auth/forgotpassword', { email });
+    return response.data;
+  },
+
+  async resetPassword(token: string, password: string) {
+    const response = await api.put(`/auth/resetpassword/${token}`, { password });
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
     return response.data;
   },
 
