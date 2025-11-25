@@ -40,6 +40,9 @@ interface AdminPanelProps {
 }
 
 export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onCancelRegistration, onRegisterForEvent, isAdmin, userRole, currentUserId, userRegistrations }: AdminPanelProps) {
+  console.log("AdminPanel (Debug) - userRole:", userRole);
+  console.log("AdminPanel (Debug) - currentUserId:", currentUserId);
+  console.log("AdminPanel (Debug) - userRegistrations:", userRegistrations);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -389,12 +392,16 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onC
           filteredEvents.map((event, index) => (
             <motion.div
               key={event.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ delay: index * 0.05 }}
-              className="group bg-card border border-border/50 rounded-2xl p-4 hover:shadow-lg hover:border-border transition-all duration-300"
+              id={`event-${event.id}`} // Add this line
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className="group bg-card border border-border rounded-[32px] overflow-hidden hover:shadow-xl hover:shadow-black/5 dark:hover:shadow-black/50 transition-all duration-500 flex flex-col h-full hover:-translate-y-2"
+              onClick={() => handleEventClick(event)}
             >
+              {console.log("AdminPanel (Debug) - event.id:", event.id)}
+              {console.log("AdminPanel (Debug) - isRegistered:", userRegistrations.includes(event.id))}
               <div className="flex flex-col sm:flex-row gap-5">
                 <div className="relative w-full sm:w-32 h-32 rounded-xl overflow-hidden flex-shrink-0">
                     <img
