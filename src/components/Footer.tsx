@@ -31,12 +31,7 @@ export function Footer({ lang }: FooterProps) {
                 ? 'مجتمع طلابي مدعوم من مطوري Google، يربط ويمكّن الطلاب في جامعة المستقبل.'
                 : 'A student-led community powered by Google Developers, connecting and empowering students at Mustaqbal University.'}
             </p>
-            <div className="flex gap-4">
-                {/* Simple social icons placeholder */}
-                {[1,2,3].map(i => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 transition-colors cursor-pointer" />
-                ))}
-            </div>
+       
           </div>
 
           {/* Quick Links */}
