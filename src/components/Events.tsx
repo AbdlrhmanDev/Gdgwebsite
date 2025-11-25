@@ -182,36 +182,7 @@ export function Events({ events, lang, userEmail = '', userRole = 'user', isLogg
         </div>
 
         {/* Bottom CTA Section ("Missed an event?") - Kept Dark/Unique as per User Image */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="relative rounded-[3rem] overflow-hidden bg-[#151515] shadow-2xl border-t border-white/5"
-        >
-          {/* Top Gradient Line */}
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#4285f4] via-[#34a853] to-[#f9ab00]" />
-          
-          <div className="relative z-10 p-12 md:p-20 text-center">
-             {/* Using the specific layout from user image */}
-             <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
-               {lang === 'ar' ? 'فاتتك فعالية؟' : 'Missed an event?'}
-             </h3>
-             
-             <p className="text-lg text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-               {lang === 'ar' 
-                 ? 'شاهد الفعاليات السابقة والجلسات المسجلة على قناتنا في YouTube'
-                 : 'Check out our past events and watch recorded sessions on our YouTube channel'
-               }
-             </p>
-             
-             <Button size="lg" variant="outline" className="h-12 px-10 rounded-full border border-white/20 bg-transparent text-white hover:bg-white hover:text-black hover:border-white transition-all text-base font-medium">
-               {lang === 'ar' ? 'شاهد الفعاليات السابقة' : 'View Past Events'}
-             </Button>
-          </div>
-
-          {/* Background Gradient Blur */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-1/2 bg-[#4285f4]/5 blur-[100px] pointer-events-none" />
-        </motion.div>
+        
 
       </div>
 
