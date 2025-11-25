@@ -35,12 +35,37 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode }: Naviga
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
-    const targetId = href.substring(1); // Remove '#'
-    const targetElement = document.getElementById(targetId);
-    if (targetElement) {
-      targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    const wasMenuOpen = isOpen;
     setIsOpen(false); // Close mobile menu if open
+    
+    const targetId = href.substring(1); // Remove '#'
+    
+    // If mobile menu was open, wait for it to close before scrolling
+    const scrollToTarget = () => {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const targetElement = document.getElementById(targetId);
+          if (targetElement) {
+            const navbarHeight = 64; // Height of fixed navbar (h-16 = 4rem = 64px)
+            const elementPosition = targetElement.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+    };
+
+    if (wasMenuOpen) {
+      // Small delay to allow menu animation to start
+      setTimeout(scrollToTarget, 150);
+    } else {
+      scrollToTarget();
+    }
   };
 
   return (
