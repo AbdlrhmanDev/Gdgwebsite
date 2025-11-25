@@ -206,36 +206,50 @@ exports.forgotPassword = async (req, res) => {
 
     await user.save({ validateBeforeSave: false });
 
-    // Create reset url
-    const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
-    // Note: In production with separate frontend, this should be the frontend URL
-    subject: 'Password Reset Token',
-      message
-  });
-  console.log('Password reset email sent successfully');
+    // Create reset link
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
+    const message = `You are receiving this email because you (or someone else) has requested a password reset for your account.
 
-  res.status(200).json({
-    success: true,
-    data: 'Email sent'
-  });
-} catch (err) {
-  console.error('Failed to send password reset email:', err);
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpire = undefined;
+Please click the link below to reset your password:
 
-  await user.save({ validateBeforeSave: false });
+${resetLink}
 
-  return res.status(500).json({
-    success: false,
-    message: 'Email could not be sent'
-  });
-}
+This link will expire in 10 minutes.
+
+If you did not request this password reset, please ignore this email and your password will remain unchanged.`;
+
+    try {
+      console.log(`Preparing to send password reset email to: ${user.email}`);
+      await sendEmail({
+        email: user.email,
+        subject: 'Password Reset Token',
+        message
+      });
+      console.log('Password reset email sent successfully');
+
+      res.status(200).json({
+        success: true,
+        data: 'Email sent'
+      });
+    } catch (err) {
+      console.error('Failed to send password reset email:', err);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+
+      await user.save({ validateBeforeSave: false });
+
+      return res.status(500).json({
+        success: false,
+        message: 'Email could not be sent'
+      });
+    }
   } catch (error) {
-  res.status(500).json({
-    success: false,
-    message: error.message
-  });
-}
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
 
 // @desc    Reset password
