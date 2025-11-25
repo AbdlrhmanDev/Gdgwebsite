@@ -17,9 +17,10 @@ interface EventDetailsModalProps {
   userEmail: string;
   userRole: 'admin' | 'member' | 'user';
   onRegisterSuccess?: () => void;
+  lang: Language; // Add lang prop
 }
 
-export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole, onRegisterSuccess }: EventDetailsModalProps) {
+export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole, onRegisterSuccess, lang }: EventDetailsModalProps) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
@@ -137,9 +138,9 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
                   {event.status}
                 </Badge>
               </div>
-              <DialogTitle className="text-2xl text-foreground">{event.title}</DialogTitle>
+              <DialogTitle className="text-2xl text-foreground">{lang === 'ar' ? event.title : event.titleEn || event.title}</DialogTitle>
               <DialogDescription className="sr-only">
-                 تفاصيل فعالية {event.title} - {event.date}
+                 تفاصيل فعالية {lang === 'ar' ? event.title : event.titleEn || event.title} - {event.date}
               </DialogDescription>
             </DialogHeader>
 
@@ -166,7 +167,7 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
                   <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm text-muted-foreground">الموقع</p>
-                    <p className="font-medium text-foreground">{event.location}</p>
+                    <p className="font-medium text-foreground">{lang === 'ar' ? event.location : event.locationEn || event.location}</p>
                   </div>
                 </div>
 
@@ -200,7 +201,7 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
               {/* Description */}
               <div>
                 <h4 className="text-lg font-semibold mb-2 text-foreground">وصف الفعالية</h4>
-                <p className="text-muted-foreground leading-relaxed">{event.description}</p>
+                <p className="text-muted-foreground leading-relaxed">{lang === 'ar' ? event.description : event.descriptionEn || event.description}</p>
               </div>
 
               {/* Requirements */}

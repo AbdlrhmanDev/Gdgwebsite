@@ -129,7 +129,7 @@ export function Events({ events, lang, userEmail = '', userRole = 'user', isLogg
                 <div className="p-8 flex flex-col flex-grow relative">
                   {/* Title */}
                   <h3 className="text-2xl font-bold text-foreground mb-6 line-clamp-2 leading-tight group-hover:text-[#4285f4] transition-colors">
-                    {event.title}
+                    {lang === 'ar' ? event.title : event.titleEn || event.title}
                   </h3>
 
                   {/* Details Grid */}
@@ -160,7 +160,7 @@ export function Events({ events, lang, userEmail = '', userRole = 'user', isLogg
                        </div>
                        <div>
                          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">{lang === 'ar' ? 'الموقع' : 'Location'}</p>
-                         <p className="text-sm font-medium text-foreground line-clamp-1">{event.location}</p>
+                         <p className="text-sm font-medium text-foreground line-clamp-1">{lang === 'ar' ? event.location : event.locationEn || event.location}</p>
                        </div>
                     </div>
                   </div>
@@ -223,6 +223,7 @@ export function Events({ events, lang, userEmail = '', userRole = 'user', isLogg
           userEmail={userEmail}
           userRole={userRole}
           onRegisterSuccess={handleRegisterSuccess}
+          lang={lang}
         />
       )}
     </section>
