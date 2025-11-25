@@ -112,7 +112,15 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode }: Naviga
                   key={item.name}
                   href={item.href}
                   className="block text-lg font-medium text-foreground hover:text-[#4285f4] transition-colors"
-                  onClick={() => setIsOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent default anchor behavior
+                    setIsOpen(false);
+                    const targetId = item.href.substring(1); // Remove '#'
+                    const targetElement = document.getElementById(targetId);
+                    if (targetElement) {
+                      targetElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
                 >
                   {item.name}
                 </a>
