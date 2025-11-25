@@ -111,7 +111,7 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border p-4 md:p-6">
+      <DialogContent className="w-[90vw] sm:w-[85vw] max-w-lg md:max-w-2xl max-h-[85vh] overflow-y-auto bg-card border-border p-3 sm:p-4 md:p-6 scale-90 sm:scale-95 md:scale-100 origin-center">
         {registrationComplete ? (
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-[#34a853]/20 rounded-full flex items-center justify-center mx-auto mb-4">
