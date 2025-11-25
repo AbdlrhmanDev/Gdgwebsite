@@ -81,9 +81,24 @@ export default function DashboardPage({
     if (userId) {
       const fetchMyRegistrations = async () => {
         try {
-          const registrations = await registrationService.getMyRegistrations();
+          const response = await registrationService.getMyRegistrations();
+          console.log("Dashboard - Full API Response:", response);
+          
+          // Handle response structure - API returns { success, data }
+          const registrations = response.success ? response.data : response;
+          console.log("Dashboard - Registrations:", registrations);
+          
           setMyRegistrations(registrations);
-          setRegisteredEventIds(registrations.map((reg: UserRegistration) => reg.eventId));
+          
+          // Extract event IDs - handle both eventId and event._id
+          const eventIds = registrations.map((reg: any) => {
+            const id = reg.event?._id || reg.eventId || reg.event?.id;
+            console.log("Dashboard - Mapping registration:", reg, "to eventId:", id);
+            return id;
+          }).filter(Boolean); // Remove any undefined values
+          
+          console.log("Dashboard - Registered Event IDs:", eventIds);
+          setRegisteredEventIds(eventIds);
         } catch (error) {
           console.error("Error fetching user registrations:", error);
         }
@@ -102,9 +117,15 @@ export default function DashboardPage({
         if (registrationToCancel) {
           await registrationService.cancelRegistration(registrationToCancel._id);
           // After successful cancellation, refetch registrations to update the UI
-          const updatedRegistrations = await registrationService.getMyRegistrations();
+          const response = await registrationService.getMyRegistrations();
+          const updatedRegistrations = response.success ? response.data : response;
           setMyRegistrations(updatedRegistrations);
-          setRegisteredEventIds(updatedRegistrations.map((reg: UserRegistration) => reg.eventId));
+          
+          const eventIds = updatedRegistrations.map((reg: any) => 
+            reg.event?._id || reg.eventId || reg.event?.id
+          ).filter(Boolean);
+          setRegisteredEventIds(eventIds);
+          
           console.log(`Registration for event ${eventId} cancelled successfully.`);
         } else {
           console.warn(`Could not find registration for event ${eventId} by user ${userId}.`);
@@ -112,6 +133,27 @@ export default function DashboardPage({
       } catch (error) {
         console.error("Error cancelling registration:", error);
       }
+    }
+  };
+
+  const handleRegisterForEvent = async (eventId: string) => {
+    try {
+      // Call the original onRegisterForEvent
+      await onRegisterForEvent(eventId);
+      
+      // Refetch registrations to update the UI
+      const response = await registrationService.getMyRegistrations();
+      const updatedRegistrations = response.success ? response.data : response;
+      setMyRegistrations(updatedRegistrations);
+      
+      const eventIds = updatedRegistrations.map((reg: any) => 
+        reg.event?._id || reg.eventId || reg.event?.id
+      ).filter(Boolean);
+      setRegisteredEventIds(eventIds);
+      
+      console.log(`Registered for event ${eventId} successfully.`);
+    } catch (error) {
+      console.error("Error registering for event:", error);
     }
   };
 
@@ -127,7 +169,7 @@ export default function DashboardPage({
             onEditEvent={onEditEvent}
             onDeleteEvent={onDeleteEvent}
             onCancelRegistration={handleCancelRegistration} // Pass new prop
-            onRegisterForEvent={onRegisterForEvent} // Pass new prop
+            onRegisterForEvent={handleRegisterForEvent} // Pass wrapped handler
             isAdmin={userRole === 'admin'}
             userRole={userRole}
             currentUserId={userId} // Pass new prop
