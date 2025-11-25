@@ -22,6 +22,7 @@ export interface Event {
   meetingLink?: string;
   requirements?: string;
   registrationMethod?: RegistrationConfig; // طريقة التسجيل
+  isPublic?: boolean;
 }
 
 export interface EventRegistration {
@@ -169,7 +170,8 @@ export const initializeDefaultData = () => {
         createdAt: new Date().toISOString(),
         tags: ["Android", "Mobile", "Kotlin"],
         isOnline: false,
-        requirements: "معرفة أساسية بالبرمجة، جهاز لابتوب"
+        requirements: "معرفة أساسية بالبرمجة، جهاز لابتوب",
+        isPublic: true
       },
       {
         id: '2',
@@ -188,7 +190,8 @@ export const initializeDefaultData = () => {
         tags: ["Cloud", "GCP", "DevOps"],
         isOnline: true,
         meetingLink: "https://meet.google.com/xxx-yyyy-zzz",
-        requirements: "حساب Google Cloud (مجاني)"
+        requirements: "حساب Google Cloud (مجاني)",
+        isPublic: true
       },
       {
         id: '3',
@@ -206,7 +209,8 @@ export const initializeDefaultData = () => {
         createdAt: new Date().toISOString(),
         tags: ["Web", "Hackathon", "Competition"],
         isOnline: false,
-        requirements: "فريق من 3-5 أشخاص، لابتوب لكل عضو"
+        requirements: "فريق من 3-5 أشخاص، لابتوب لكل عضو",
+        isPublic: true
       }
     ];
     saveEvents(defaultEvents);

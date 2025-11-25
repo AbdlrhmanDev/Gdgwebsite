@@ -38,6 +38,7 @@ const mapApiEvent = (apiEvent: ApiEvent): any => ({
   tags: apiEvent.tags,
   createdAt: apiEvent.createdAt,
   createdBy: apiEvent.createdBy,
+  isPublic: apiEvent.isPublic ?? true,
 });
 
 export default function App() {

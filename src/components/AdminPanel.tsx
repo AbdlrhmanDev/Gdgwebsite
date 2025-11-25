@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Label } from "./ui/label";
+import { Switch } from "./ui/switch";
 import { RegistrationMethodSelector } from "./RegistrationMethodSelector";
 import { RegistrationConfig, internalRegistration } from "../lib/registration-methods";
 import { Event } from "../lib/storage";
@@ -30,11 +31,17 @@ interface AdminPanelProps {
   onAddEvent: (event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => void;
   onEditEvent: (id: string, event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => void;
   onDeleteEvent: (id: string) => void;
+  onCancelRegistration: (eventId: string) => void; // New prop
   isAdmin: boolean;
   userRole: 'admin' | 'leader' | 'member' | 'user';
+  currentUserId: string; // New prop
+  userRegistrations: string[]; // New prop: array of event IDs the user is registered for
 }
 
-export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isAdmin, userRole }: AdminPanelProps) {
+export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onCancelRegistration, isAdmin, userRole, currentUserId, userRegistrations }: AdminPanelProps) {
+  console.log("AdminPanel - userRole:", userRole);
+  console.log("AdminPanel - currentUserId:", currentUserId);
+  console.log("AdminPanel - userRegistrations:", userRegistrations);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,7 +60,8 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     isOnline: false,
     meetingLink: "",
     requirements: "",
-    registrationMethod: internalRegistration as RegistrationConfig
+    registrationMethod: internalRegistration as RegistrationConfig,
+    isPublic: true,
   });
 
   const canAddEvents = isAdmin || userRole === 'admin' || userRole === 'leader';
@@ -109,7 +117,8 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
       isOnline: event.isOnline || false,
       meetingLink: event.meetingLink || "",
       requirements: event.requirements || "",
-      registrationMethod: event.registrationMethod || internalRegistration as RegistrationConfig
+      registrationMethod: event.registrationMethod || internalRegistration as RegistrationConfig,
+      isPublic: event.isPublic !== false,
     });
     setIsDialogOpen(true);
   };
@@ -135,7 +144,8 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
       isOnline: false,
       meetingLink: "",
       requirements: "",
-      registrationMethod: internalRegistration as RegistrationConfig
+      registrationMethod: internalRegistration as RegistrationConfig,
+      isPublic: true,
     });
     setEditingEvent(null);
   };
@@ -158,7 +168,7 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
         </div>
         
         {canAddEvents ? (
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => {
             setIsDialogOpen(open);
             if (!open) resetForm();
           }}>
@@ -299,6 +309,18 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                   </div>
                 </div>
 
+                <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-2xl">
+                  <div>
+                    <Label htmlFor="isPublic" className="text-sm font-medium">عرض الفعالية للزوار</Label>
+                    <p className="text-xs text-muted-foreground mt-1">إخفِ أو أظهر الفعالية في الموقع العام ولوحة المستخدم.</p>
+                  </div>
+                  <Switch
+                    id="isPublic"
+                    checked={formData.isPublic}
+                    onCheckedChange={(checked: boolean) => setFormData({ ...formData, isPublic: checked })}
+                  />
+                </div>
+
                 {/* Registration Method */}
                 <div className="border-t border-border pt-4">
                   <Label className="mb-2 block">طريقة التسجيل</Label>
@@ -375,6 +397,7 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
               transition={{ delay: index * 0.05 }}
               className="group bg-card border border-border/50 rounded-2xl p-4 hover:shadow-lg hover:border-border transition-all duration-300"
             >
+              {console.log("AdminPanel - event.id:", event.id)}
               <div className="flex flex-col sm:flex-row gap-5">
                 <div className="relative w-full sm:w-32 h-32 rounded-xl overflow-hidden flex-shrink-0">
                     <img
@@ -393,6 +416,11 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                         <Badge style={{ backgroundColor: event.color }} className="shadow-sm">
                           {event.status}
                         </Badge>
+                        {event.isPublic === false && (
+                          <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/50">
+                            غير مرئي للعامة
+                          </Badge>
+                        )}
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm text-muted-foreground">
@@ -419,14 +447,24 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                             <DropdownMenuItem onClick={() => setViewingRegistrations(event)}>
-                                <Eye className="w-4 h-4 ml-2" />
-                                عرض التسجيلات
-                             </DropdownMenuItem>
-                             <DropdownMenuItem onClick={() => handleEdit(event)}>
-                                <Edit className="w-4 h-4 ml-2" />
-                                تعديل
-                             </DropdownMenuItem>
+                             {(isAdmin || userRole === 'leader') && (
+                                <DropdownMenuItem onClick={() => setViewingRegistrations(event)}>
+                                   <Eye className="w-4 h-4 ml-2" />
+                                   عرض التسجيلات
+                                </DropdownMenuItem>
+                             )}
+                             {(isAdmin || userRole === 'leader') && (
+                                <DropdownMenuItem onClick={() => handleEdit(event)}>
+                                    <Edit className="w-4 h-4 ml-2" />
+                                    تعديل
+                                </DropdownMenuItem>
+                             )}
+                             {(userRole === 'member' && userRegistrations.includes(event.id)) && (
+                                <DropdownMenuItem onClick={() => onCancelRegistration(event.id)} className="text-orange-500 focus:text-orange-500">
+                                    <X className="w-4 h-4 ml-2" />
+                                    إلغاء التسجيل
+                                </DropdownMenuItem>
+                             )}
                              {(isAdmin || userRole === 'leader') && (
                                 <DropdownMenuItem onClick={() => handleDelete(event.id)} className="text-red-500 focus:text-red-500">
                                     <Trash2 className="w-4 h-4 ml-2" />

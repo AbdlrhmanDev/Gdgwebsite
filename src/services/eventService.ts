@@ -21,6 +21,7 @@ export interface Event {
   status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
   featured?: boolean;
   tags?: string[];
+  isPublic?: boolean;
   organizer?: any;
   createdAt?: string;
   createdBy?: string;

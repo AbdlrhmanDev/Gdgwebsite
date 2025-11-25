@@ -39,8 +39,10 @@ export function Events({ events, lang, userEmail = '', userRole = 'user', isLogg
     }
   };
 
+  // Hide non-public events from public section
+  const publicEvents = events.filter((event) => event.isPublic !== false);
   // Fallback demo events if none provided
-  const displayEvents = events.length > 0 ? events : [];
+  const displayEvents = publicEvents.length > 0 ? publicEvents : [];
 
   return (
     <section className="bg-background py-24 relative overflow-hidden" dir={isRTL ? 'rtl' : 'ltr'}>

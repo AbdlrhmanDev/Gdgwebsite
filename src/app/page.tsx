@@ -37,6 +37,7 @@ export default function HomePage({
     // but components handle their own translation
     return ""; 
   };
+  const publicEvents = events.filter((event) => event.isPublic !== false);
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
@@ -62,7 +63,7 @@ export default function HomePage({
         </section>
         <section id="events">
           <Events 
-            events={events} 
+            events={publicEvents} 
             lang={currentLang}
             userEmail={userEmail}
             userRole={userRole}

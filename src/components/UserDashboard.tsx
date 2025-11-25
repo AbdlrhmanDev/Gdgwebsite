@@ -15,6 +15,7 @@ interface Event {
   image: string;
   status: string;
   color: string;
+  isPublic?: boolean;
 }
 
 interface UserDashboardProps {
