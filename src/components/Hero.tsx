@@ -16,9 +16,11 @@ export function Hero({ lang, onLoginClick, isLoggedIn }: HeroProps) {
 
   // Typing effect state
   const [codeText, setCodeText] = useState("");
+  const [animationComplete, setAnimationComplete] = useState(false);
   const fullCode = `npm install gdg-community\n> Installing packages...\n> Added: networking\n> Added: workshops\n> Added: hackathons\n\n> Success! You are now connected.`;
 
   useEffect(() => {
+    if (animationComplete) return;
     let i = 0;
     const timer = setInterval(() => {
       if (i < fullCode.length) {
@@ -26,10 +28,11 @@ export function Hero({ lang, onLoginClick, isLoggedIn }: HeroProps) {
         i++;
       } else {
         clearInterval(timer);
+        setAnimationComplete(true);
       }
     }, 40);
     return () => clearInterval(timer);
-  }, []);
+  }, [animationComplete]);
 
   // Floating animation variant
   const float = {
@@ -79,7 +82,7 @@ export function Hero({ lang, onLoginClick, isLoggedIn }: HeroProps) {
                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
              </span>
-             <span className="text-xs font-bold tracking-wide text-foreground uppercase">Mustaqbal University Season 2026</span>
+             <span className="text-xs font-bold tracking-wide text-foreground uppercase">Mustaqbal University Season 2025</span>
            </div>
         </motion.div>
 
@@ -180,25 +183,7 @@ export function Hero({ lang, onLoginClick, isLoggedIn }: HeroProps) {
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
            </div>
 
-           {/* Floating Element: Workshop (Bottom Left) */}
-           <motion.div 
-             variants={float}
-             animate="animate"
-             className="absolute -bottom-6 -left-2 md:-left-8 bg-card border border-border p-4 rounded-xl shadow-xl w-[240px] z-20 hidden md:block"
-           >
-              <div className="flex items-center gap-3 mb-3">
-                 <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                    <Zap className="w-4 h-4" />
-                 </div>
-                 <div>
-                    <p className="text-xs font-bold text-foreground">Live Workshop</p>
-                    <p className="text-[10px] text-muted-foreground">React & Motion</p>
-                 </div>
-              </div>
-              <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden">
-                 <div className="bg-blue-500 w-[70%] h-full rounded-full" />
-              </div>
-           </motion.div>
+        
 
            {/* Floating Element: Community (Top Right) */}
            <motion.div 
