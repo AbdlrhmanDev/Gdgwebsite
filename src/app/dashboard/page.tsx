@@ -14,7 +14,7 @@ import { LeaderboardPanel } from "../../components/LeaderboardPanel";
 import { CreateTaskModal } from "../../components/CreateTaskModal";
 import { type Event } from "../../lib/storage";
 import { type UserRole } from "../../App";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export type DashboardView = 'overview' | 'events' | 'analytics' | 'profile' | 'gamification' | 'members' | 'settings' | 'browse' | 'myevents' | 'tasks' | 'departments' | 'leaderboard';
 
@@ -45,8 +45,23 @@ export default function DashboardPage({
   onRegisterForEvent,
   gamificationData
 }: DashboardPageProps) {
-  const [dashboardView, setDashboardView] = useState<DashboardView>('overview');
+  const getDefaultViewForRole = (role: UserRole): DashboardView => {
+    switch (role) {
+      case 'member':
+        return 'events';
+      case 'user':
+        return 'browse';
+      default:
+        return 'overview';
+    }
+  };
+
+  const [dashboardView, setDashboardView] = useState<DashboardView>(() => getDefaultViewForRole(userRole));
   const [showCreateTask, setShowCreateTask] = useState(false);
+
+  useEffect(() => {
+    setDashboardView(getDefaultViewForRole(userRole));
+  }, [userRole]);
 
   const renderContent = () => {
     switch (dashboardView) {
