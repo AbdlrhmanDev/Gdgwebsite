@@ -6,51 +6,38 @@ const sendEmail = async (options) => {
     const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT,
-        secure: process.env.SMTP_PORT == 465,
+        secure: process.env.SMTP_PORT == 465, // true for 465, false for other ports
         auth: {
             user: process.env.SMTP_EMAIL,
             pass: process.env.SMTP_PASSWORD
         },
-        const nodemailer = require('nodemailer');
+        tls: {
+            ciphers: 'SSLv3'
+        },
+        family: 4 // Force IPv4 to avoid IPv6 connection issues on Render
+    });
 
-        const sendEmail = async (options) => {
-            console.log(`Attempting to send email... Host: ${process.env.SMTP_HOST}, Port: ${process.env.SMTP_PORT}, Secure: ${process.env.SMTP_PORT == 465}`);
+    // Verify connection configuration
+    try {
+        await transporter.verify();
+        console.log('SMTP Connection verified successfully');
+    } catch (error) {
+        console.error('SMTP Connection Verification Failed:', error);
+        throw error; // Re-throw to be caught by controller
+    }
 
-            const transporter = nodemailer.createTransport({
-                host: process.env.SMTP_HOST,
-                port: process.env.SMTP_PORT,
-                secure: process.env.SMTP_PORT == 465,
-                auth: {
-                    user: process.env.SMTP_EMAIL,
-                    pass: process.env.SMTP_PASSWORD
-                },
-                tls: {
-                    ciphers: 'SSLv3'
-                },
-                family: 4
-            });
+    const message = {
+        from: `${process.env.FROM_NAME} <${process.env.FROM_EMAIL}>`,
+        to: options.email,
+        subject: options.subject,
+        text: options.message
+    };
 
-            // Verify connection configuration
-            try {
-                await transporter.verify();
-                console.log('SMTP Connection verified successfully');
-            } catch (error) {
-                console.error('SMTP Connection Verification Failed:', error);
-                throw error; // Re-throw to be caught by controller
-            }
+    console.log('Sending email payload:', JSON.stringify({ ...message, text: '***' }, null, 2));
 
-            const message = {
-                from: `${process.env.FROM_NAME} <${process.env.FROM_EMAIL}>`,
-                to: options.email,
-                subject: options.subject,
-                text: options.message
-            };
+    const info = await transporter.sendMail(message);
 
-            console.log('Sending email payload:', JSON.stringify({ ...message, text: '***' }, null, 2));
+    console.log('Message sent successfully. MessageID: %s', info.messageId);
+};
 
-            const info = await transporter.sendMail(message);
-
-            console.log('Message sent successfully. MessageID: %s', info.messageId);
-        };
-
-        module.exports = sendEmail;
+module.exports = sendEmail;
