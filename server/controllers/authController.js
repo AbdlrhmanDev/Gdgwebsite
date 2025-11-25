@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const sendEmail = require('../utils/sendEmail');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -216,7 +217,7 @@ exports.forgotPassword = async (req, res) => {
     const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${frontendUrl}/reset-password/${resetToken}`;
 
     try {
-      const sendEmail = require('../utils/sendEmail');
+      // const sendEmail = require('../utils/sendEmail'); // Moved to top
       await sendEmail({
         email: user.email,
         subject: 'Password Reset Token',
