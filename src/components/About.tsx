@@ -52,7 +52,7 @@ export function About({ lang }: AboutProps) {
 
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-20 space-y-4">
-          <motion.h2 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -61,9 +61,11 @@ export function About({ lang }: AboutProps) {
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
               {lang === 'ar' ? 'عن GDG في الحرم الجامعي' : 'About GDG on Campus'}
             </span>
-          </motion.h2>
+            <br /> 
+          </motion.h1>
+          <br />
           <motion.p 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
