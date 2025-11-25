@@ -39,13 +39,29 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  location: {
+    type: String,
+    trim: true
+  },
   bio: {
     type: String,
     maxlength: 500
   },
+  skills: {
+    type: [String],
+    default: []
+  },
+  interests: {
+    type: [String],
+    default: []
+  },
   avatar: {
     type: String,
     default: ''
+  },
+  website: {
+    type: String,
+    trim: true
   },
   // Gamification fields
   points: {
@@ -67,7 +83,8 @@ const userSchema = new mongoose.Schema({
   socialLinks: {
     linkedin: String,
     github: String,
-    twitter: String
+    twitter: String,
+    website: String
   },
   // Activity tracking
   eventsAttended: [{

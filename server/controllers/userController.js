@@ -112,7 +112,23 @@ exports.getUser = async (req, res) => {
 // @access  Private
 exports.updateUser = async (req, res) => {
   try {
-    const { name, email, password, role, phone, bio, avatar, socialLinks, department } = req.body;
+    const {
+      name,
+      email,
+      password,
+      role,
+      phone,
+      bio,
+      avatar,
+      socialLinks,
+      department,
+      skills,
+      interests,
+      projects,
+      certificates,
+      location,
+      website
+    } = req.body;
     
     // Check if user is updating their own profile or is admin/leader
     if (req.params.id !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'leader') {
@@ -125,11 +141,17 @@ exports.updateUser = async (req, res) => {
     // Build update object
     const updateData = {};
     if (name) updateData.name = name;
-    if (phone) updateData.phone = phone;
-    if (bio) updateData.bio = bio;
-    if (avatar) updateData.avatar = avatar;
+    if (typeof phone !== 'undefined') updateData.phone = phone;
+    if (typeof bio !== 'undefined') updateData.bio = bio;
+    if (typeof avatar !== 'undefined') updateData.avatar = avatar;
+    if (typeof location !== 'undefined') updateData.location = location;
+    if (typeof website !== 'undefined') updateData.website = website;
     if (socialLinks) updateData.socialLinks = socialLinks;
     if (department) updateData.department = department;
+    if (typeof skills !== 'undefined') updateData.skills = skills;
+    if (typeof interests !== 'undefined') updateData.interests = interests;
+    if (typeof projects !== 'undefined') updateData.projects = projects;
+    if (typeof certificates !== 'undefined') updateData.certificates = certificates;
     
     // Admin/Leader-only fields
     if (req.user.role === 'admin' || req.user.role === 'leader') {
