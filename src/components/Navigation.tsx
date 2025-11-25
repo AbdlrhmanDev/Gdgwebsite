@@ -33,6 +33,16 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode }: Naviga
     { name: t('nav.contact'), href: "#contact" }
   ];
 
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const targetId = href.substring(1); // Remove '#'
+    const targetElement = document.getElementById(targetId);
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setIsOpen(false); // Close mobile menu if open
+  };
+
   return (
     <motion.nav 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${
@@ -68,7 +78,8 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode }: Naviga
               <a
                 key={item.name}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative group"
+                onClick={(e) => handleNavClick(e, item.href)}
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative group cursor-pointer"
               >
                 {item.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#4285f4] group-hover:w-full transition-all duration-300"></span>
@@ -111,16 +122,8 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode }: Naviga
                 <a
                   key={item.name}
                   href={item.href}
-                  className="block text-lg font-medium text-foreground hover:text-[#4285f4] transition-colors"
-                  onClick={(e) => {
-                    e.preventDefault(); // Prevent default anchor behavior
-                    setIsOpen(false);
-                    const targetId = item.href.substring(1); // Remove '#'
-                    const targetElement = document.getElementById(targetId);
-                    if (targetElement) {
-                      targetElement.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
+                  onClick={(e) => handleNavClick(e, item.href)}
+                  className="block text-lg font-medium text-foreground hover:text-[#4285f4] transition-colors cursor-pointer"
                 >
                   {item.name}
                 </a>
