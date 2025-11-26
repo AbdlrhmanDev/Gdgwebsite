@@ -209,6 +209,8 @@ exports.forgotPassword = async (req, res) => {
     // Create reset link
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
+
+    // Plain text version
     const message = `You are receiving this email because you (or someone else) has requested a password reset for your account.
 
 Please click the link below to reset your password:
@@ -219,12 +221,98 @@ This link will expire in 10 minutes.
 
 If you did not request this password reset, please ignore this email and your password will remain unchanged.`;
 
+    // HTML version
+    const htmlMessage = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Reset</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Password Reset Request</h1>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                Hello,
+              </p>
+              <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                You are receiving this email because you (or someone else) has requested a password reset for your account.
+              </p>
+              <p style="color: #333333; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                Please click the button below to reset your password:
+              </p>
+              
+              <!-- Button -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0;">
+                    <a href="${resetLink}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Reset Password</a>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="color: #666666; font-size: 14px; line-height: 1.6; margin: 30px 0 20px 0;">
+                Or copy and paste this link into your browser:
+              </p>
+              <p style="color: #667eea; font-size: 14px; word-break: break-all; margin: 0 0 30px 0;">
+                ${resetLink}
+              </p>
+              
+              <!-- Warning Box -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fff3cd; border-left: 4px solid #ffc107; margin: 20px 0;">
+                <tr>
+                  <td style="padding: 15px;">
+                    <p style="color: #856404; font-size: 14px; margin: 0; line-height: 1.6;">
+                      ⚠️ This link will expire in <strong>10 minutes</strong> for security reasons.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <p style="color: #666666; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0;">
+                If you did not request this password reset, please ignore this email and your password will remain unchanged.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fa; padding: 30px; text-align: center; border-top: 1px solid #e9ecef;">
+              <p style="color: #6c757d; font-size: 14px; margin: 0 0 10px 0;">
+                This is an automated message from <strong>${process.env.FROM_NAME || 'GDG Team'}</strong>
+              </p>
+              <p style="color: #6c757d; font-size: 12px; margin: 0;">
+                Please do not reply to this email.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
     try {
       console.log(`Preparing to send password reset email to: ${user.email}`);
       await sendEmail({
         email: user.email,
-        subject: 'Password Reset Token',
-        message
+        subject: 'Password Reset Request - Action Required',
+        message,
+        html: htmlMessage
       });
       console.log('Password reset email sent successfully');
 

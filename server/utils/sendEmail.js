@@ -11,9 +11,10 @@ const sendEmail = async (options) => {
         from: process.env.FROM_EMAIL, // Must be a verified sender in SendGrid
         subject: options.subject,
         text: options.message,
+        html: options.html || options.message.replace(/\n/g, '<br>'), // Use HTML if provided, otherwise convert text
     };
 
-    console.log('Sending email payload:', JSON.stringify({ ...message, text: '***' }, null, 2));
+    console.log('Sending email payload:', JSON.stringify({ ...message, text: '***', html: '***' }, null, 2));
 
     try {
         const response = await sgMail.send(message);
