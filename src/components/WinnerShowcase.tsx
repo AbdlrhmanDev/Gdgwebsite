@@ -168,16 +168,16 @@ export function WinnerShowcase({ lang }: WinnerShowcaseProps) {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.3 + (index * 0.1) }}
-                className="mt-[-2rem] relative z-20 bg-card border border-border p-4 rounded-3xl shadow-xl w-[85%] text-center"
+                className="mt-[-2.5rem] relative z-20 bg-card border border-border p-5 rounded-3xl shadow-xl w-[90%] text-center flex flex-col items-center gap-2"
               >
                 <div 
-                  className="absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-lg"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black shadow-lg shrink-0 mb-1"
                   style={{ backgroundColor: winner.color }}
                 >
                   {winner.rank}
                 </div>
-                <h4 className="font-black text-lg mt-2">{winner.name}</h4>
-                <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase mt-1">
+                <h4 className="font-black text-xl leading-tight">{winner.name}</h4>
+                <p className="text-[10px] text-muted-foreground font-bold tracking-[0.2em] uppercase">
                   {winner.rank === '1' ? 'Gold Mastery' : winner.rank === '2' ? 'Silver Creative' : 'Bronze Spirit'}
                 </p>
               </motion.div>
