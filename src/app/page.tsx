@@ -1,5 +1,6 @@
 import { Navigation } from "../components/Navigation";
 import { Hero } from "../components/Hero";
+import { WinnerShowcase } from "../components/WinnerShowcase";
 import { About } from '../components/About';
 import { Events } from '../components/Events';
 import { Team } from '../components/Team';
@@ -72,6 +73,9 @@ export default function HomePage({
             onLoginClick={onLoginClick}
             isLoggedIn={isLoggedIn || false}
           />
+        </section>
+        <section id="winner">
+          <WinnerShowcase lang={currentLang} />
         </section>
         <section id="about">
           <About lang={currentLang} />
