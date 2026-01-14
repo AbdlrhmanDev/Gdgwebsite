@@ -1,111 +1,192 @@
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { type Language } from "../lib/i18n";
+import { useState, useEffect } from "react";
+import { X, ZoomIn } from "lucide-react";
+import { createPortal } from "react-dom";
 
 interface WinnerShowcaseProps {
   lang: Language;
 }
 
 export function WinnerShowcase({ lang }: WinnerShowcaseProps) {
-  return (
-    <section className="relative py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-background">
-      {/* Background patterns */}
-      <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-12">
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const winners = [
+    {
+      id: 1,
+      name: "Nora Raad",
+      image: "/IMG_7951.jpg",
+      place: lang === 'ar' ? 'المركز الأول' : '1st Place',
+      rank: "1",
+      color: "#f9ab00"
+    },
+    {
+      id: 2,
+      name: "Nona",
+      image: "/2.png",
+      place: lang === 'ar' ? 'المركز الثاني' : '2nd Place',
+      rank: "2",
+      color: "#4285f4"
+    },
+    {
+      id: 3,
+      name: "Abu Sultan",
+      image: "/3.jpg",
+      place: lang === 'ar' ? 'المركز الثالث' : '3rd Place',
+      rank: "3",
+      color: "#ea4335"
+    }
+  ];
+
+  const activeWinner = winners.find(w => w.id === selectedId);
+
+  const Modal = () => (
+    <AnimatePresence>
+      {selectedId !== null && activeWinner && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md"
+          style={{ zIndex: 99999999 }}
+          onClick={() => setSelectedId(null)}
+        >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="inline-block px-4 py-1.5 mb-6 rounded-full bg-primary/10 text-primary text-sm font-semibold tracking-wide uppercase"
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            className="relative max-w-5xl w-full max-h-[90vh] bg-[#1a1a1a] rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10 flex flex-col md:flex-row"
+            onClick={(e) => e.stopPropagation()}
           >
-            {lang === 'ar' ? 'الفائز بمسابقة جيمناي' : 'Gemini Competition Winner'}
+            <button 
+              onClick={() => setSelectedId(null)}
+              className="absolute top-6 right-6 z-[100] p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors backdrop-blur-md"
+            >
+              <X size={24} />
+            </button>
+
+            <div className="flex-1 bg-black flex items-center justify-center overflow-hidden min-h-[300px] md:min-h-0">
+              <img 
+                src={activeWinner.image} 
+                alt={activeWinner.name}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+
+            <div className="p-8 md:w-80 bg-[#1a1a1a] border-t md:border-t-0 md:border-l border-white/10 flex flex-col justify-center">
+              <div 
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl font-black mb-6 shadow-xl shrink-0"
+                style={{ backgroundColor: activeWinner.color }}
+              >
+                {activeWinner.rank}
+              </div>
+              <h3 className="text-3xl font-black text-white mb-2">{activeWinner.name}</h3>
+              <p className="font-bold uppercase tracking-[0.2em] text-sm mb-6" style={{ color: activeWinner.color }}>
+                {activeWinner.place}
+              </p>
+              <div className="w-12 h-1 bg-white/10 mb-6 rounded-full" />
+              <p className="text-gray-400 text-sm leading-relaxed italic">
+                {lang === 'ar' 
+                  ? 'تم إنشاء هذه المقطوعة الفنية الرائعة باستخدام تقنيات الذكاء الاصطناعي من جوجل (Gemini) في مسابقة GDG Mustaqbal University.'
+                  : 'This outstanding masterpiece was created using Google Gemini AI technologies during the GDG Mustaqbal University competition.'}
+              </p>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  return (
+    <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-background overflow-visible">
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="inline-block px-4 py-1.5 mb-6 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase border border-primary/20"
+          >
+            {lang === 'ar' ? 'أبطال مسابقة جيمناي' : 'Gemini Contest Champions'}
           </motion.div>
           
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight"
+            className="text-3xl md:text-5xl font-black mb-4 tracking-tight"
           >
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#4285f4] via-[#ea4335] to-[#f9ab00]">
-              {lang === 'ar' ? 'أفضل صورة من إنشاء Gemini' : 'Best Photo Generated by Gemini'}
+              {lang === 'ar' ? 'أفضل الصور من إنشاء Gemini' : 'Best Photos Generated by Gemini'}
             </span>
           </motion.h2>
-          
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-lg text-muted-foreground max-w-2xl mx-auto"
-          >
-            {lang === 'ar' 
-              ? 'نهنئ الفائز في مسابقة GDG Mustaqbal University لأفضل صورة إبداعية باستخدام تقنيات الذكاء الاصطناعي من جوجل.'
-              : 'Congratulations to the winner of the GDG Mustaqbal University competition for the most creative photo using Google\'s Gemini AI technologies.'}
-          </motion.p>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative group mt-8 max-w-2xl mx-auto"
-        >
-          {/* Decorative glow */}
-          <div className="absolute -inset-1.5 bg-gradient-to-r from-[#4285f4] via-[#ea4335] to-[#f9ab00] rounded-[2.5rem] opacity-25 blur-2xl group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-          
-          {/* Main Image Container */}
-          <div className="relative aspect-[16/8] rounded-[2rem] overflow-hidden border border-border bg-card shadow-2xl">
-            <img 
-              src="/IMG_7951.jpg" 
-              alt="Winner: Best Photo Generated by Gemini" 
-              className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
-            />
-            
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-8 md:p-12">
-              <div className="text-white">
-                <p className="text-sm font-medium uppercase tracking-[0.2em] mb-2 opacity-80">
-                  {lang === 'ar' ? 'الحدث' : 'Event'}
-                </p>
-                <h3 className="text-2xl md:text-3xl font-bold">
-                  {lang === 'ar' ? 'مسابقة GDG للإبداع' : 'GDG Creativity Competition'}
-                </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+          {winners.map((winner, index) => (
+            <motion.div
+              key={winner.id}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1, duration: 0.5 }}
+              className="relative flex flex-col items-center"
+            >
+              <div 
+                className="relative w-full aspect-[4/5] rounded-[2.5rem] overflow-hidden border border-border bg-card shadow-2xl cursor-pointer hover:shadow-primary/5 transition-all duration-500 group"
+                onClick={() => setSelectedId(winner.id)}
+              >
+                {/* Image */}
+                <img 
+                  src={winner.image} 
+                  alt={winner.name} 
+                  className="w-full h-full object-cover transition duration-700 group-hover:scale-110"
+                />
+                
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+                    <ZoomIn className="text-white w-6 h-6" />
+                  </div>
+                </div>
+
+                {/* Place Ribbon */}
+                <div className="absolute top-6 left-6 px-4 py-2 rounded-2xl bg-black/50 backdrop-blur-md border border-white/10 text-white text-xs font-bold flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: winner.color }} />
+                  {winner.place}
+                </div>
               </div>
-            </div>
-          </div>
-          
-          {/* Bottom badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-            className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-background border border-border shadow-xl rounded-2xl px-8 py-4 flex items-center gap-4 whitespace-nowrap"
-          >
-            <div className="w-10 h-10 rounded-full bg-[#f9ab00] flex items-center justify-center text-white">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">
-                {lang === 'ar' ? 'المركز الأول' : '1st Place Winner'}
-              </p>
-              <p className="font-bold">Nora Raad</p>
-            </div>
-          </motion.div>
-        </motion.div>
+              
+              {/* Badge info at bottom */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 + (index * 0.1) }}
+                className="mt-[-2rem] relative z-20 bg-card border border-border p-4 rounded-3xl shadow-xl w-[85%] text-center"
+              >
+                <div 
+                  className="absolute -top-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-lg"
+                  style={{ backgroundColor: winner.color }}
+                >
+                  {winner.rank}
+                </div>
+                <h4 className="font-black text-lg mt-2">{winner.name}</h4>
+                <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase mt-1">
+                  {winner.rank === '1' ? 'Gold Mastery' : winner.rank === '2' ? 'Silver Creative' : 'Bronze Spirit'}
+                </p>
+              </motion.div>
+            </motion.div>
+          ))}
+        </div>
       </div>
+
+      {isMounted && createPortal(<Modal />, document.body)}
     </section>
   );
 }
