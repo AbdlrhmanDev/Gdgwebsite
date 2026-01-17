@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, Clock, MapPin, Users, Tag, Monitor, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { Event, EventRegistration, addRegistration, generateQRCode, isUserRegistered, getEventById, updateEvent, getEventRegistrations } from "../lib/storage";
+import { Event } from "../lib/storage";
 import { getRegistrationUrl, getRegistrationButtonText, getRegistrationMethodIcon } from "../lib/registration-methods";
+import { registrationService } from "../services/registrationService";
+import { eventService } from "../services/eventService";
+import { toast } from "sonner";
 
 interface EventDetailsModalProps {
   event: Event;
@@ -14,24 +17,54 @@ interface EventDetailsModalProps {
   userEmail: string;
   userRole: 'admin' | 'member' | 'user';
   onRegisterSuccess?: () => void;
+  lang: Language; // Add lang prop
 }
 
-export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole, onRegisterSuccess }: EventDetailsModalProps) {
+export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole, onRegisterSuccess, lang }: EventDetailsModalProps) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [registrationComplete, setRegistrationComplete] = useState(false);
-  
-  const alreadyRegistered = isUserRegistered(event.id, userEmail);
-  const currentRegistrations = getEventRegistrations(event.id).length;
-  const isFull = currentRegistrations >= event.capacity;
-  const canRegister = userRole !== 'user' && !alreadyRegistered && !isFull;
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // تحديد طريقة التسجيل
   const registrationMethod = event.registrationMethod?.method || 'internal';
   const isExternalRegistration = ['google-form', 'typeform', 'microsoft-form', 'external-link', 'email'].includes(registrationMethod);
 
+  const currentRegistrations = event.attendees || 0;
+  const isFull = currentRegistrations >= event.capacity;
+  const canRegister = userRole !== 'user' && !alreadyRegistered && !isFull;
+
+  // Check if user is already registered
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (!userEmail || userRole === 'user') {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await registrationService.getMyRegistrations();
+        if (response.success) {
+          const isRegistered = response.data.some((reg: any) => 
+            reg.event?._id === event.id && reg.status !== 'cancelled'
+          );
+          setAlreadyRegistered(isRegistered);
+        }
+      } catch (error) {
+        console.error('Failed to check registration:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      checkRegistration();
+    }
+  }, [isOpen, event.id, userEmail, userRole]);
+
   const handleRegister = async () => {
     if (userRole === 'user') {
-      alert('يجب أن تكون عضواً للتسجيل في الفعاليات. يرجى إنشاء حساب عضو.');
+      toast.error('يجب أن تكون عضواً للتسجيل في الفعاليات. يرجى إنشاء حساب عضو.');
       return;
     }
 
@@ -41,54 +74,44 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
       window.open(url, '_blank');
       
       // إظهار رسالة توجيه
-      alert('سيتم فتح نموذج التسجيل في نافذة جديدة. يرجى ملء البيانات المطلوبة.');
+      toast.info('سيتم فتح نموذج التسجيل في نافذة جديدة. يرجى ملء البيانات المطلوبة.');
       return;
     }
 
-    // التسجيل الداخلي
+    // التسجيل الداخلي عبر الـ API
     setIsRegistering(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Use 'custom' for internal registration method
+      const backendMethod = registrationMethod === 'internal' ? 'custom' : registrationMethod;
+      const response = await registrationService.registerForEvent(event.id, backendMethod);
+      
+      if (response.success) {
+        setRegistrationComplete(true);
+        setAlreadyRegistered(true);
 
-    const registration: EventRegistration = {
-      id: Date.now().toString(),
-      eventId: event.id,
-      userId: userEmail,
-      userEmail: userEmail,
-      userName: userEmail.split('@')[0], // In real app, get from user profile
-      registeredAt: new Date().toISOString(),
-      status: 'registered',
-      qrCode: generateQRCode(`${event.id}-${userEmail}`)
-    };
+        if (onRegisterSuccess) {
+          onRegisterSuccess();
+        }
 
-    addRegistration(registration);
-
-    // Update event attendees count
-    const updatedEvent = getEventById(event.id);
-    if (updatedEvent) {
-      updateEvent(event.id, { 
-        attendees: currentRegistrations + 1 
-      });
+        // Show success message
+        setTimeout(() => {
+          setRegistrationComplete(false);
+          onClose();
+        }, 2000);
+      }
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      const message = error.response?.data?.message || 'فشل التسجيل. يرجى المحاولة مرة أخرى.';
+      toast.error(message);
+    } finally {
+      setIsRegistering(false);
     }
-
-    setIsRegistering(false);
-    setRegistrationComplete(true);
-
-    if (onRegisterSuccess) {
-      onRegisterSuccess();
-    }
-
-    // Show success message
-    setTimeout(() => {
-      setRegistrationComplete(false);
-      onClose();
-    }, 2000);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border">
+      <DialogContent className="w-[90vw] sm:w-[85vw] max-w-lg md:max-w-2xl max-h-[85vh] overflow-y-auto bg-card border-border p-3 sm:p-4 md:p-6 scale-90 sm:scale-95 md:scale-100 origin-center">
         {registrationComplete ? (
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-[#34a853]/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -101,68 +124,72 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
           </div>
         ) : (
           <>
+            {/* Status Badge at Top */}
+            <div className="absolute top-2 left-2 md:top-3 md:left-3 z-10">
+              <Badge
+                className="text-xs md:text-sm shadow-lg"
+                style={{ backgroundColor: event.color }}
+              >
+                {event.status}
+              </Badge>
+            </div>
+
             <DialogHeader>
               <div className="relative">
                 <ImageWithFallback
                   src={event.image}
                   alt={event.title}
-                  className="w-full h-48 object-cover rounded-lg mb-4"
+                  className="w-full h-40 md:h-48 object-cover rounded-lg mb-3 md:mb-4"
                 />
-                <Badge
-                  className="absolute top-4 right-4"
-                  style={{ backgroundColor: event.color }}
-                >
-                  {event.status}
-                </Badge>
               </div>
-              <DialogTitle className="text-2xl text-foreground">{event.title}</DialogTitle>
+              <DialogTitle className="text-xl md:text-2xl text-foreground">{lang === 'ar' ? event.title : event.titleEn || event.title}</DialogTitle>
               <DialogDescription className="sr-only">
-                 تفاصيل فعالية {event.title} - {event.date}
+                 تفاصيل فعالية {lang === 'ar' ? event.title : event.titleEn || event.title} - {event.date}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Event Info */}
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                  <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                <div className="flex items-start gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-muted/30">
+                  <Calendar className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm text-muted-foreground">التاريخ</p>
-                    <p className="font-medium text-foreground">{event.date}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">التاريخ</p>
+                    <p className="text-sm md:text-base font-medium text-foreground">{new Date(event.date).toLocaleDateString()}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                  <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div className="flex items-start gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-muted/30">
+                  <Clock className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm text-muted-foreground">الوقت</p>
-                    <p className="font-medium text-foreground">{event.time}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">الوقت</p>
+                    <p className="text-sm md:text-base font-medium text-foreground">{event.time}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                  <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div className="flex items-start gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-muted/30">
+                  <MapPin className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm text-muted-foreground">الموقع</p>
-                    <p className="font-medium text-foreground">{event.location}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">الموقع</p>
+                    <p className="text-sm md:text-base font-medium text-foreground">{lang === 'ar' ? event.location : event.locationEn || event.location}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                  <Users className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div className="flex items-start gap-2 md:gap-3 p-2 md:p-3 rounded-lg bg-muted/30">
+                  <Users className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm text-muted-foreground">المقاعد</p>
-                    <p className="font-medium text-foreground">{currentRegistrations} / {event.capacity}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">المقاعد</p>
+                    <p className="text-sm md:text-base font-medium text-foreground">{currentRegistrations} / {event.capacity}</p>
                   </div>
                 </div>
               </div>
 
               {/* Online Meeting Link */}
               {event.isOnline && event.meetingLink && (
-                <div className="p-4 bg-[#4285f4]/10 rounded-lg flex items-center gap-3 border border-[#4285f4]/20">
-                  <Monitor className="w-5 h-5 text-[#4285f4]" />
+                <div className="p-3 md:p-4 bg-[#4285f4]/10 rounded-lg flex items-center gap-2 md:gap-3 border border-[#4285f4]/20">
+                  <Monitor className="w-4 h-4 md:w-5 md:h-5 text-[#4285f4]" />
                   <div className="flex-1">
-                    <p className="text-sm mb-1 font-medium text-[#4285f4]">فعالية عبر الإنترنت</p>
+                    <p className="text-xs md:text-sm mb-1 font-medium text-[#4285f4]">فعالية عبر الإنترنت</p>
                     <a 
                       href={event.meetingLink}
                       target="_blank"
@@ -177,23 +204,23 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
 
               {/* Description */}
               <div>
-                <h4 className="text-lg font-semibold mb-2 text-foreground">وصف الفعالية</h4>
-                <p className="text-muted-foreground leading-relaxed">{event.description}</p>
+                <h4 className="text-base md:text-lg font-semibold mb-2 text-foreground">وصف الفعالية</h4>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{event.description}</p>
               </div>
 
               {/* Requirements */}
               {event.requirements && (
                 <div>
-                  <h4 className="text-lg font-semibold mb-2 text-foreground">المتطلبات</h4>
-                  <p className="text-muted-foreground">{event.requirements}</p>
+                  <h4 className="text-base md:text-lg font-semibold mb-2 text-foreground">المتطلبات</h4>
+                  <p className="text-sm md:text-base text-muted-foreground">{event.requirements}</p>
                 </div>
               )}
 
               {/* Tags */}
               {event.tags && event.tags.length > 0 && (
                 <div>
-                  <h4 className="text-lg font-semibold mb-2 flex items-center gap-2 text-foreground">
-                    <Tag className="w-4 h-4" />
+                  <h4 className="text-base md:text-lg font-semibold mb-2 flex items-center gap-2 text-foreground">
+                    <Tag className="w-4 h-4 md:w-5 md:h-5" />
                     الموضوعات
                   </h4>
                   <div className="flex flex-wrap gap-2">
@@ -208,8 +235,8 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
 
               {/* Registration Method Info */}
               {event.registrationMethod && registrationMethod !== 'internal' && (
-                <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                  <div className="flex items-start gap-3">
+                <div className="p-3 md:p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                  <div className="flex items-start gap-2 md:gap-3">
                     <div className="text-2xl">{getRegistrationMethodIcon(registrationMethod)}</div>
                     <div className="flex-1">
                       <p className="font-medium text-blue-500 mb-1">
@@ -242,35 +269,35 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
 
               {/* Registration Status Messages */}
               {alreadyRegistered && (
-                <div className="p-4 bg-[#34a853]/10 rounded-lg flex items-center gap-3 border border-[#34a853]/20">
-                  <CheckCircle className="w-5 h-5 text-[#34a853]" />
-                  <p className="text-[#34a853] font-medium">أنت مسجل بالفعل في هذه الفعالية</p>
+                <div className="p-3 md:p-4 bg-[#34a853]/10 rounded-lg flex items-center gap-2 md:gap-3 border border-[#34a853]/20">
+                  <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-[#34a853] shrink-0" />
+                  <p className="text-[#34a853] font-medium text-sm md:text-base">أنت مسجل بالفعل في هذه الفعالية</p>
                 </div>
               )}
 
               {isFull && !alreadyRegistered && (
-                <div className="p-4 bg-[#ea4335]/10 rounded-lg flex items-center gap-3 border border-[#ea4335]/20">
-                  <AlertCircle className="w-5 h-5 text-[#ea4335]" />
-                  <p className="text-[#ea4335] font-medium">عذراً، اكتمل العدد المسموح للفعالية</p>
+                <div className="p-3 md:p-4 bg-[#ea4335]/10 rounded-lg flex items-center gap-2 md:gap-3 border border-[#ea4335]/20">
+                  <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-[#ea4335] shrink-0" />
+                  <p className="text-[#ea4335] font-medium text-sm md:text-base">عذراً، اكتمل العدد المسموح للفعالية</p>
                 </div>
               )}
 
               {userRole === 'user' && !alreadyRegistered && (
-                <div className="p-4 bg-[#f9ab00]/10 rounded-lg flex items-center gap-3 border border-[#f9ab00]/20">
-                  <AlertCircle className="w-5 h-5 text-[#f9ab00]" />
+                <div className="p-3 md:p-4 bg-[#f9ab00]/10 rounded-lg flex items-center gap-2 md:gap-3 border border-[#f9ab00]/20">
+                  <AlertCircle className="w-4 h-4 md:w-5 md:h-5 text-[#f9ab00] shrink-0" />
                   <div>
-                    <p className="text-[#f9ab00] mb-1 font-medium">يجب أن تكون عضواً للتسجيل</p>
-                    <p className="text-sm text-muted-foreground">سجل كعضو للاستفادة من جميع المزايا</p>
+                    <p className="text-[#f9ab00] mb-1 font-medium text-sm md:text-base">يجب أن تكون عضواً للتسجيل</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">سجل كعضو للاستفادة من جميع المزايا</p>
                   </div>
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-border">
+              <div className="flex gap-2 md:gap-3 pt-3 md:pt-4 border-t border-border">
                 <Button
                   variant="outline"
                   onClick={onClose}
-                  className="flex-1 hover:bg-muted"
+                  className="flex-1 hover:bg-muted text-sm md:text-base h-10 md:h-11"
                 >
                   إغلاق
                 </Button>
@@ -278,7 +305,7 @@ export function EventDetailsModal({ event, isOpen, onClose, userEmail, userRole,
                   <Button
                     onClick={handleRegister}
                     disabled={isRegistering}
-                    className="flex-1 text-white"
+                    className="flex-1 text-white text-sm md:text-base h-10 md:h-11"
                     style={{ backgroundColor: event.color }}
                   >
                     {isRegistering ? 'جاري التسجيل...' : 'سجل الآن'}

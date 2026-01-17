@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Mail, Phone, MapPin, Link as LinkIcon, Edit, Save, Camera, Github, Linkedin, Twitter, Star, Code, Globe, Award, Zap } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -7,6 +7,52 @@ import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { motion } from "motion/react";
+import { userService } from "../services/userService";
+
+type SocialFieldKey = 'github' | 'linkedin' | 'twitter' | 'website';
+
+interface ProfileProject {
+  name: string;
+  description: string;
+  url: string;
+  tech: string[];
+  stars: number;
+}
+
+interface ProfileCertificate {
+  name: string;
+  url: string;
+  date?: string | Date;
+}
+
+interface ProjectFormState {
+  name: string;
+  description: string;
+  url: string;
+  tech: string;
+  stars: string;
+}
+
+interface ProfileData {
+  name: string;
+  email: string;
+  phone: string;
+  location: string;
+  bio: string;
+  skills: string[];
+  interests: string[];
+  github: string;
+  linkedin: string;
+  twitter: string;
+  website: string;
+  points: number;
+  level: number;
+  department: string;
+  badges: any[];
+  eventsAttended: any[];
+  projects: ProfileProject[];
+  certificates: ProfileCertificate[];
+}
 
 interface MemberProfileProps {
   userId: string;
@@ -15,24 +61,187 @@ interface MemberProfileProps {
 
 export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "سارة الرشيد",
-    email: "sarah@mustaqbal.edu",
-    phone: "+966 50 123 4567",
-    location: "الرياض، المملكة العربية السعودية",
-    bio: "مطورة برمجيات شغوفة بالذكاء الاصطناعي والتعلم الآلي. أحب بناء حلول مبتكرة للمشاكل الواقعية.",
-    skills: ["React", "Python", "Machine Learning", "Node.js", "TypeScript"],
-    interests: ["AI", "Web Development", "Cloud Computing"],
-    github: "https://github.com/sarah",
-    linkedin: "https://linkedin.com/in/sarah",
-    twitter: "https://twitter.com/sarah",
-    website: "https://sarah.dev"
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<ProfileData>({
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
+    skills: [] as string[],
+    interests: [] as string[],
+    github: "",
+    linkedin: "",
+    twitter: "",
+    website: "",
+    points: 0,
+    level: 0,
+    department: "",
+    badges: [] as any[],
+    eventsAttended: [] as any[],
+    projects: [],
+    certificates: []
+  });
+  const [newSkill, setNewSkill] = useState("");
+  const [newInterest, setNewInterest] = useState("");
+  const [projectForm, setProjectForm] = useState<ProjectFormState>({
+    name: "",
+    description: "",
+    url: "",
+    tech: "",
+    stars: ""
   });
 
-  const handleSave = () => {
-    // Save profile changes
-    setIsEditing(false);
+  useEffect(() => {
+    loadUserProfile();
+  }, [userId]);
+
+  const loadUserProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await userService.getUser(userId);
+      if (response.success) {
+        const user = response.data;
+        setProfile({
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          location: user.location || "",
+          bio: user.bio || "لم يتم إضافة وصف بعد",
+          skills: user.skills || [],
+          interests: user.interests || [],
+          github: user.socialLinks?.github || "",
+          linkedin: user.socialLinks?.linkedin || "",
+          twitter: user.socialLinks?.twitter || "",
+          website: user.website || user.socialLinks?.website || "",
+          points: user.points || 0,
+          level: user.level || 1,
+          department: user.department || "none",
+          badges: user.badges || [],
+          eventsAttended: user.eventsAttended || [],
+          projects: user.projects || [],
+          certificates: user.certificates || []
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load user profile:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSave = async () => {
+    try {
+      const response = await userService.updateUser(userId, {
+        name: profile.name,
+        bio: profile.bio,
+        skills: profile.skills,
+        interests: profile.interests,
+        phone: profile.phone,
+        location: profile.location,
+        website: profile.website,
+        projects: profile.projects,
+        certificates: profile.certificates,
+        socialLinks: {
+          github: profile.github || undefined,
+          linkedin: profile.linkedin || undefined,
+          twitter: profile.twitter || undefined,
+          website: profile.website || undefined
+        }
+      });
+      
+      if (response.success) {
+        setIsEditing(false);
+        alert('تم تحديث الملف الشخصي بنجاح!');
+      }
+    } catch (error: any) {
+      console.error('Failed to update profile:', error);
+      alert('فشل تحديث الملف الشخصي');
+    }
+  };
+
+  const handleAddSkill = () => {
+    const value = newSkill.trim();
+    if (!value || profile.skills.includes(value)) return;
+    setProfile((prev) => ({ ...prev, skills: [...prev.skills, value] }));
+    setNewSkill("");
+  };
+
+  const handleRemoveSkill = (index: number) => {
+    setProfile((prev) => ({
+      ...prev,
+      skills: prev.skills.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleAddInterest = () => {
+    const value = newInterest.trim();
+    if (!value || profile.interests.includes(value)) return;
+    setProfile((prev) => ({ ...prev, interests: [...prev.interests, value] }));
+    setNewInterest("");
+  };
+
+  const handleRemoveInterest = (index: number) => {
+    setProfile((prev) => ({
+      ...prev,
+      interests: prev.interests.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleProjectFormChange = (field: keyof typeof projectForm, value: string) => {
+    setProjectForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddProject = () => {
+    const name = projectForm.name.trim();
+    if (!name) return;
+
+    const newProject = {
+      name,
+      description: projectForm.description.trim(),
+      url: projectForm.url.trim(),
+      stars: Number(projectForm.stars) || 0,
+      tech: projectForm.tech
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    };
+
+    setProfile((prev) => ({
+      ...prev,
+      projects: [...prev.projects, newProject]
+    }));
+
+    setProjectForm({
+      name: "",
+      description: "",
+      url: "",
+      tech: "",
+      stars: ""
+    });
+  };
+
+  const handleRemoveProject = (index: number) => {
+    setProfile((prev) => ({
+      ...prev,
+      projects: prev.projects.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleSocialLinkChange = (field: SocialFieldKey, value: string) => {
+    setProfile((prev) => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -48,6 +257,18 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
   };
+
+  const socialFields: Array<{
+    icon: typeof Github;
+    label: string;
+    field: SocialFieldKey;
+    placeholder: string;
+  }> = [
+    { icon: Github, label: "GitHub", field: "github", placeholder: "https://github.com/username" },
+    { icon: Linkedin, label: "LinkedIn", field: "linkedin", placeholder: "https://linkedin.com/in/username" },
+    { icon: Twitter, label: "Twitter", field: "twitter", placeholder: "https://twitter.com/username" },
+    { icon: LinkIcon, label: "Website", field: "website", placeholder: "https://example.com" }
+  ];
 
   return (
     <motion.div 
@@ -78,7 +299,16 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
             <div className="flex-1 w-full">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold mb-1">{profile.name}</h2>
+                    {isEditing ? (
+                      <Input
+                        value={profile.name}
+                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                        className="max-w-sm bg-white/20 text-white placeholder:text-white/60 border-white/30 h-10 text-lg font-semibold"
+                        placeholder="أدخل اسمك"
+                      />
+                    ) : (
+                      <h2 className="text-3xl font-bold mb-1">{profile.name}</h2>
+                    )}
                     <p className="opacity-90 mb-3 flex items-center gap-2">
                         <Mail className="w-4 h-4 opacity-70" />
                         {profile.email}
@@ -100,8 +330,7 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
                 {isOwnProfile && (
                     <Button
                     onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                    className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm"
-                    size="sm"
+                    className="bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-sm h-9 px-4 text-sm"
                     >
                     {isEditing ? (
                         <>
@@ -186,30 +415,32 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
                     روابط التواصل
                 </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                {[
-                    { icon: Github, label: "GitHub", url: profile.github },
-                    { icon: Linkedin, label: "LinkedIn", url: profile.linkedin },
-                    { icon: Twitter, label: "Twitter", url: profile.twitter },
-                    { icon: LinkIcon, label: "Website", url: profile.website }
-                ].map((link, i) => {
-                    const Icon = link.icon;
-                    return (
-                        <a 
-                            key={i}
-                            href={link.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors group"
+                <CardContent className="space-y-4">
+                  {socialFields.map(({ icon: Icon, label, field, placeholder }) => (
+                    <div key={field} className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <Icon className="w-4 h-4" />
+                      <span className="min-w-[80px]">{label}</span>
+                      {isEditing ? (
+                        <Input
+                          value={profile[field] || ""}
+                          onChange={(e) => handleSocialLinkChange(field, e.target.value)}
+                          placeholder={placeholder}
+                          className="bg-muted/50 h-8"
+                        />
+                      ) : profile[field] ? (
+                        <a
+                          href={profile[field]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-foreground hover:underline truncate"
                         >
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground group-hover:text-foreground">
-                                <Icon className="w-4 h-4" />
-                                <span>{link.label}</span>
-                            </div>
-                            <LinkIcon className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          {profile[field]}
                         </a>
-                    );
-                })}
+                      ) : (
+                        <span className="text-muted-foreground/70">لم يتم الإضافة بعد</span>
+                      )}
+                    </div>
+                  ))}
                 </CardContent>
             </Card>
           </motion.div>
@@ -226,19 +457,19 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
                 <CardContent className="space-y-4">
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/30">
                     <span className="text-sm text-muted-foreground">الفعاليات المشاركة</span>
-                    <span className="text-lg font-semibold">24</span>
+                    <span className="text-lg font-semibold">{profile.eventsAttended.length}</span>
                 </div>
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/30">
                     <span className="text-sm text-muted-foreground">المشاريع</span>
-                    <span className="text-lg font-semibold">8</span>
+                    <span className="text-lg font-semibold">{profile.projects.length}</span>
                 </div>
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/30">
                     <span className="text-sm text-muted-foreground">الشهادات</span>
-                    <span className="text-lg font-semibold">12</span>
+                    <span className="text-lg font-semibold">{profile.certificates.length}</span>
                 </div>
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/30 border border-yellow-500/20">
                     <span className="text-sm text-muted-foreground">النقاط</span>
-                    <span className="text-lg font-bold text-[#f9ab00]">1,250</span>
+                    <span className="text-lg font-bold text-[#f9ab00]">{profile.points}</span>
                 </div>
                 </CardContent>
             </Card>
@@ -278,22 +509,39 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
                 </CardTitle>
                 </CardHeader>
                 <CardContent>
-                <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill, index) => (
-                    <Badge
-                    key={index}
-                    variant="secondary"
-                    className="bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/20 px-3 py-1"
-                    >
-                    {skill}
-                    </Badge>
-                ))}
-                {isEditing && (
-                    <Button size="sm" variant="outline" className="h-6 text-xs border-dashed">
-                    + إضافة مهارة
-                    </Button>
-                )}
-                </div>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.skills.map((skill, index) => (
+                      <Badge
+                        key={`${skill}-${index}`}
+                        variant="secondary"
+                        className="bg-blue-500/10 text-blue-400 border-blue-500/20 px-3 py-1 flex items-center gap-2"
+                      >
+                        <span>{skill}</span>
+                        {isEditing && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSkill(index)}
+                            className="text-xs text-red-400 hover:text-red-500 focus:outline-none"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </Badge>
+                    ))}
+                  </div>
+                  {isEditing && (
+                    <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                      <Input
+                        value={newSkill}
+                        onChange={(e) => setNewSkill(e.target.value)}
+                        placeholder="أضف مهارة جديدة"
+                        className="bg-muted/50"
+                      />
+                      <Button onClick={handleAddSkill} disabled={!newSkill.trim()} className="h-9 px-4 text-sm">
+                        إضافة
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
             </Card>
           </motion.div>
@@ -308,22 +556,39 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
                 </CardTitle>
                 </CardHeader>
                 <CardContent>
-                <div className="flex flex-wrap gap-2">
-                {profile.interests.map((interest, index) => (
-                    <Badge
-                    key={index}
-                    variant="secondary"
-                    className="bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/20 px-3 py-1"
-                    >
-                    {interest}
-                    </Badge>
-                ))}
-                {isEditing && (
-                    <Button size="sm" variant="outline" className="h-6 text-xs border-dashed">
-                    + إضافة اهتمام
-                    </Button>
-                )}
-                </div>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.interests.map((interest, index) => (
+                      <Badge
+                        key={`${interest}-${index}`}
+                        variant="secondary"
+                        className="bg-green-500/10 text-green-400 border-green-500/20 px-3 py-1 flex items-center gap-2"
+                      >
+                        <span>{interest}</span>
+                        {isEditing && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveInterest(index)}
+                            className="text-xs text-red-400 hover:text-red-500 focus:outline-none"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </Badge>
+                    ))}
+                  </div>
+                  {isEditing && (
+                    <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                      <Input
+                        value={newInterest}
+                        onChange={(e) => setNewInterest(e.target.value)}
+                        placeholder="أضف اهتماماً جديداً"
+                        className="bg-muted/50"
+                      />
+                      <Button onClick={handleAddInterest} disabled={!newInterest.trim()} className="h-9 px-4 text-sm">
+                        إضافة
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
             </Card>
           </motion.div>
@@ -334,30 +599,82 @@ export function MemberProfile({ userId, isOwnProfile }: MemberProfileProps) {
                 <CardHeader>
                 <CardTitle className="text-lg">المشاريع الأخيرة</CardTitle>
                 </CardHeader>
-                <CardContent>
-                <div className="grid sm:grid-cols-2 gap-4">
-                {[
-                    { name: "نظام إدارة المكتبة", tech: "React, Node.js", stars: 45 },
-                    { name: "تطبيق الطقس", tech: "Flutter, Firebase", stars: 32 },
-                    { name: "منصة التعلم", tech: "Next.js, PostgreSQL", stars: 67 }
-                ].map((project, index) => (
-                    <div key={index} className="border border-border rounded-xl p-4 hover:bg-muted/30 transition-colors group">
-                    <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium group-hover:text-primary transition-colors">{project.name}</h4>
-                        <div className="flex items-center gap-1 text-xs text-[#f9ab00] bg-yellow-500/10 px-2 py-1 rounded-full">
+                <CardContent className="space-y-4">
+                  {profile.projects.length === 0 && (
+                    <p className="text-sm text-muted-foreground">لا توجد مشاريع مضافة حتى الآن.</p>
+                  )}
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {profile.projects.map((project, index) => (
+                      <div key={`${project.name}-${index}`} className="border border-border rounded-xl p-4 hover:bg-muted/30 transition-colors group relative">
+                        {isEditing && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveProject(index)}
+                            className="absolute top-3 left-3 text-xs text-muted-foreground hover:text-red-500"
+                          >
+                            إزالة
+                          </button>
+                        )}
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-medium group-hover:text-primary transition-colors">{project.name}</h4>
+                          <div className="flex items-center gap-1 text-xs text-[#f9ab00] bg-yellow-500/10 px-2 py-1 rounded-full">
                             <Star className="w-3 h-3 fill-current" />
                             <span>{project.stars}</span>
+                          </div>
                         </div>
+                        <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{project.tech.join(', ')}</p>
+                        {project.url && (
+                          <a
+                            href={project.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline"
+                          >
+                            عرض المشروع
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {isEditing && (
+                    <div className="space-y-3 border border-dashed border-border rounded-xl p-4">
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <Input
+                          placeholder="اسم المشروع"
+                          value={projectForm.name}
+                          onChange={(e) => handleProjectFormChange("name", e.target.value)}
+                        />
+                        <Input
+                          placeholder="رابط المشروع"
+                          value={projectForm.url}
+                          onChange={(e) => handleProjectFormChange("url", e.target.value)}
+                        />
+                        <Input
+                          placeholder="التقنيات (افصل بينها بفاصلة)"
+                          value={projectForm.tech}
+                          onChange={(e) => handleProjectFormChange("tech", e.target.value)}
+                        />
+                        <Input
+                          placeholder="التقييم أو النجوم"
+                          value={projectForm.stars}
+                          onChange={(e) => handleProjectFormChange("stars", e.target.value)}
+                        />
+                      </div>
+                      <Textarea
+                        rows={3}
+                        placeholder="وصف مختصر للمشروع"
+                        value={projectForm.description}
+                        onChange={(e) => handleProjectFormChange("description", e.target.value)}
+                        className="bg-muted/50"
+                      />
+                      <div className="flex justify-end">
+                        <Button onClick={handleAddProject} disabled={!projectForm.name.trim()} className="h-9 px-4 text-sm">
+                          إضافة مشروع
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-3">{project.tech}</p>
-                    <div className="flex gap-2">
-                         <div className="h-1.5 w-1.5 rounded-full bg-primary/50" />
-                         <div className="h-1.5 w-1.5 rounded-full bg-primary/50" />
-                         <div className="h-1.5 w-1.5 rounded-full bg-primary/50" />
-                    </div>
-                    </div>
-                ))}
-                </div>
+                  )}
                 </CardContent>
             </Card>
           </motion.div>

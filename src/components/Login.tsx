@@ -3,46 +3,27 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
-import { Lock, Mail, Key } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 import { motion } from "motion/react";
 
 interface LoginProps {
-  onLogin: (email: string, password: string, role: 'admin' | 'member' | 'user') => void;
+  onLogin: (email: string, password: string) => void;
   onRegister: () => void;
+  onForgotPassword: () => void;
 }
 
-export function Login({ onLogin, onRegister }: LoginProps) {
+export function Login({ onLogin, onRegister, onForgotPassword }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [selectedRole, setSelectedRole] = useState<'admin' | 'member' | 'user'>('user');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(email, password, selectedRole);
-  };
-
-  // Demo credentials info
-  const demoCredentials = {
-    admin: { email: "admin@gdg.com", password: "admin123" },
-    member: { email: "member@gdg.com", password: "member123" },
-    user: { email: "user@gdg.com", password: "user123" }
-  };
-
-  const roleInfo = {
-    user: {
-      title: "مستخدم",
-      description: "عرض الفعاليات والمحتوى العام",
-      color: "#9e9e9e"
-    },
-    member: {
-      title: "عضو",
-      description: "التسجيل في الفعاليات وجمع النقاط",
-      color: "#4285f4"
-    },
-    admin: {
-      title: "مدير",
-      description: "صلاحيات كاملة لإدارة النظام",
-      color: "#34a853"
+    setIsLoading(true);
+    try {
+      await onLogin(email, password);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,41 +57,9 @@ export function Login({ onLogin, onRegister }: LoginProps) {
               اختر نوع الحساب وسجل دخولك إلى مجتمع GDG
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-3">
-                <Label htmlFor="role" className="text-gray-300">نوع الحساب</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['user', 'member', 'admin'] as const).map((role) => (
-                    <button
-                      key={role}
-                      type="button"
-                      onClick={() => setSelectedRole(role)}
-                      className={`py-2 px-2 rounded-xl text-sm font-medium transition-all duration-300 border ${
-                        selectedRole === role
-                          ? 'border-transparent text-white shadow-lg scale-105'
-                          : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
-                      }`}
-                      style={selectedRole === role ? {
-                        backgroundColor: roleInfo[role].color,
-                        boxShadow: `0 4px 12px ${roleInfo[role].color}40`
-                      } : {}}
-                    >
-                      {roleInfo[role].title}
-                    </button>
-                  ))}
-                </div>
-                <motion.p 
-                  key={selectedRole}
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-xs text-gray-500 text-center h-4"
-                >
-                  {roleInfo[selectedRole].description}
-                </motion.p>
-              </div>
-
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-gray-300">البريد الإلكتروني</Label>
@@ -123,15 +72,25 @@ export function Login({ onLogin, onRegister }: LoginProps) {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your.email@example.com"
                       required
+                      disabled={isLoading}
                       className="bg-white/5 border-white/10 pr-10 focus:border-[#4285f4] transition-colors"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-gray-300">كلمة المرور</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-gray-300">كلمة المرور</Label>
+                    <button
+                      type="button"
+                      onClick={onForgotPassword}
+                      className="text-xs text-[#4285f4] hover:text-[#5d9af8] hover:underline transition-colors"
+                    >
+                      نسيت كلمة المرور؟
+                    </button>
+                  </div>
                   <div className="relative">
-                    <Key className="absolute right-3 top-3 w-4 h-4 text-gray-500" />
+                    <Lock className="absolute right-3 top-3 w-4 h-4 text-gray-500" />
                     <Input
                       id="password"
                       type="password"
@@ -139,6 +98,7 @@ export function Login({ onLogin, onRegister }: LoginProps) {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
+                      disabled={isLoading}
                       className="bg-white/5 border-white/10 pr-10 focus:border-[#4285f4] transition-colors"
                     />
                   </div>
@@ -147,13 +107,10 @@ export function Login({ onLogin, onRegister }: LoginProps) {
 
               <Button
                 type="submit"
-                className="w-full h-11 text-base font-medium transition-all hover:scale-[1.02]"
-                style={{
-                  backgroundColor: roleInfo[selectedRole].color,
-                  boxShadow: `0 4px 12px ${roleInfo[selectedRole].color}40`
-                }}
+                disabled={isLoading}
+                className="w-full h-11 text-base font-medium transition-all hover:scale-[1.02] bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
               >
-                دخول
+                {isLoading ? "جاري تسجيل الدخول..." : "دخول"}
               </Button>
             </form>
 
@@ -178,28 +135,6 @@ export function Login({ onLogin, onRegister }: LoginProps) {
                   إنشاء حساب جديد
                 </button>
               </p>
-            </div>
-
-            {/* Demo Credentials */}
-            <div className="p-4 rounded-xl bg-white/5 border border-white/5 space-y-2">
-              <div className="flex items-center gap-2 text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">
-                <Lock className="w-3 h-3" />
-                بيانات تجريبية
-              </div>
-              <div className="grid gap-1.5 text-xs font-mono">
-                <div className="flex justify-between text-gray-500 hover:text-gray-300 transition-colors">
-                  <span>User:</span>
-                  <span>{demoCredentials.user.email}</span>
-                </div>
-                <div className="flex justify-between text-gray-500 hover:text-gray-300 transition-colors">
-                  <span>Member:</span>
-                  <span>{demoCredentials.member.email}</span>
-                </div>
-                <div className="flex justify-between text-gray-500 hover:text-gray-300 transition-colors">
-                  <span>Admin:</span>
-                  <span>{demoCredentials.admin.email}</span>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>

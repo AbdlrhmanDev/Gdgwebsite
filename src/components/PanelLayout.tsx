@@ -6,7 +6,7 @@ import { useState } from "react";
 
 interface PanelLayoutProps {
   children: React.ReactNode;
-  userRole: 'admin' | 'member' | 'user';
+  userRole: 'admin' | 'leader' | 'member' | 'user';
   userEmail: string;
   onLogout: () => void;
   onNavigateToSite: () => void;
@@ -19,12 +19,14 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
 
   const roleColors = {
     admin: '#34a853',
+    leader: '#34a853',
     member: '#4285f4',
     user: '#9e9e9e'
   };
 
   const roleLabels = {
     admin: 'مدير',
+    leader: 'قائد',
     member: 'عضو',
     user: 'مستخدم'
   };
@@ -32,9 +34,9 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
   const roleColor = roleColors[userRole];
 
   const getNavItems = () => {
-    const baseItems = [
-      { id: 'overview', label: 'لوحة التحكم', icon: LayoutDashboard }
-    ];
+    const baseItems = (userRole === 'admin' || userRole === 'leader')
+      ? [{ id: 'overview', label: 'لوحة التحكم', icon: LayoutDashboard }]
+      : [];
 
     if (userRole === 'user') {
       return [
@@ -46,9 +48,7 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
     if (userRole === 'member') {
       return [
         ...baseItems,
-        { id: 'tasks', label: 'مهامي', icon: CheckSquare },
         { id: 'events', label: 'فعالياتي', icon: Calendar },
-        { id: 'departments', label: 'قسمي', icon: Briefcase },
         { id: 'profile', label: 'الملف الشخصي', icon: User },
         { id: 'gamification', label: 'النقاط والإنجازات', icon: Trophy }
       ];
@@ -59,6 +59,7 @@ export function PanelLayout({ children, userRole, userEmail, onLogout, onNavigat
       { id: 'tasks', label: 'المهام', icon: CheckSquare },
       { id: 'events', label: 'إدارة الفعاليات', icon: Calendar },
       { id: 'departments', label: 'الأقسام والفرق', icon: Briefcase },
+      { id: 'leaderboard', label: 'لوحة المتصدرين', icon: Trophy },
       { id: 'profile', label: 'الملف الشخصي', icon: User },
       { id: 'gamification', label: 'النقاط والإنجازات', icon: Trophy },
       { id: 'analytics', label: 'التحليلات', icon: BarChart },

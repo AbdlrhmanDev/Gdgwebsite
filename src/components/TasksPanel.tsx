@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Calendar, AlertCircle, CheckCircle, Clock, Filter, Search } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -6,15 +6,7 @@ import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Progress } from "./ui/progress";
-import { 
-  Task, 
-  getTasksByUser, 
-  getDepartmentById,
-  getPriorityLabel,
-  getStatusLabel,
-  updateTask,
-  getUserDepartment
-} from "../lib/departments";
+import { taskService } from "../services/taskService";
 
 interface TasksPanelProps {
   userEmail: string;
@@ -25,18 +17,34 @@ interface TasksPanelProps {
 export function TasksPanel({ userEmail, userRole, onCreateTask }: TasksPanelProps) {
   const [selectedTab, setSelectedTab] = useState<'all' | 'todo' | 'in-progress' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState<any[]>([]);
   
-  const userTasks = getTasksByUser(userEmail);
-  const userDepartment = getUserDepartment(userEmail);
-  const department = userDepartment ? getDepartmentById(userDepartment.departmentId) : undefined;
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
+  const loadTasks = async () => {
+    try {
+      setLoading(true);
+      const response = await taskService.getTasks();
+      if (response.success) {
+        setTasks(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load tasks:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter tasks
-  const filteredTasks = userTasks.filter(task => {
+  const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         task.description.toLowerCase().includes(searchQuery.toLowerCase());
+                         (task.description && task.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
     if (selectedTab === 'all') return matchesSearch;
-    if (selectedTab === 'todo') return matchesSearch && task.status === 'todo';
+    if (selectedTab === 'todo') return matchesSearch && task.status === 'pending';
     if (selectedTab === 'in-progress') return matchesSearch && (task.status === 'in-progress' || task.status === 'review');
     if (selectedTab === 'completed') return matchesSearch && task.status === 'completed';
     
@@ -45,23 +53,36 @@ export function TasksPanel({ userEmail, userRole, onCreateTask }: TasksPanelProp
 
   // Stats
   const stats = {
-    total: userTasks.length,
-    todo: userTasks.filter(t => t.status === 'todo').length,
-    inProgress: userTasks.filter(t => t.status === 'in-progress' || t.status === 'review').length,
-    completed: userTasks.filter(t => t.status === 'completed').length,
-    overdue: userTasks.filter(t => {
+    total: tasks.length,
+    todo: tasks.filter(t => t.status === 'pending').length,
+    inProgress: tasks.filter(t => t.status === 'in-progress' || t.status === 'review').length,
+    completed: tasks.filter(t => t.status === 'completed').length,
+    overdue: tasks.filter(t => {
       const dueDate = new Date(t.dueDate);
       return dueDate < new Date() && t.status !== 'completed';
     }).length
   };
 
-  const handleStatusChange = (taskId: string, newStatus: Task['status']) => {
-    updateTask(taskId, { 
-      status: newStatus,
-      progress: newStatus === 'completed' ? 100 : undefined
-    });
-    window.location.reload(); // Refresh to show updated data
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    try {
+      const response = await taskService.updateTask(taskId, { 
+        status: newStatus,
+      });
+      if (response.success) {
+        loadTasks(); // Reload tasks
+      }
+    } catch (error) {
+      console.error('Failed to update task:', error);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   const isOverdue = (dueDate: string) => {
     return new Date(dueDate) < new Date();
@@ -88,18 +109,7 @@ export function TasksPanel({ userEmail, userRole, onCreateTask }: TasksPanelProp
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl mb-2">مهامي</h2>
-          <div className="flex items-center gap-2">
-            <p className="text-gray-600">
-              {department ? (
-                <>
-                  <span className="text-2xl ml-2">{department.icon}</span>
-                  {department.nameAr}
-                </>
-              ) : (
-                'لم يتم تعيين قسم'
-              )}
-            </p>
-          </div>
+          <p className="text-gray-600">إدارة جميع المهام والمشاريع</p>
         </div>
         {userRole === 'admin' && (
           <Button onClick={onCreateTask} className="bg-[#4285f4]">
@@ -233,7 +243,6 @@ export function TasksPanel({ userEmail, userRole, onCreateTask }: TasksPanelProp
             filteredTasks.map((task) => {
               const priority = getPriorityLabel(task.priority);
               const status = getStatusLabel(task.status);
-              const taskDept = getDepartmentById(task.departmentId);
               const overdue = isOverdue(task.dueDate) && task.status !== 'completed';
 
               return (
@@ -275,10 +284,13 @@ export function TasksPanel({ userEmail, userRole, onCreateTask }: TasksPanelProp
                             {formatDate(task.dueDate)}
                           </span>
                         </div>
-                        {taskDept && (
+                        {task.department && (
                           <div className="flex items-center gap-2">
-                            <span>{taskDept.icon}</span>
-                            <span>{taskDept.nameAr}</span>
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: task.department.color }}
+                            />
+                            <span>{task.department.nameAr}</span>
                           </div>
                         )}
                         <Badge variant="outline" style={{ borderColor: status.color, color: status.color }}>

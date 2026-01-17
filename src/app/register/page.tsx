@@ -1,17 +1,15 @@
-"use client";
+import { Register } from "../../components/Register";
 
-import { Register } from "@/components/Register";
-import { useGlobal } from "@/contexts/GlobalContext";
-import { useRouter } from "next/navigation";
+interface RegisterPageProps {
+  onRegister: (email: string, password: string, name: string, studentId: string) => void;
+  onBackToLogin: () => void;
+}
 
-export default function RegisterPage() {
-    const { register } = useGlobal();
-    const router = useRouter();
-
-    return (
-        <Register
-            onRegister={register}
-            onBackToLogin={() => router.push('/login')}
-        />
-    );
+export default function RegisterPage({ onRegister, onBackToLogin }: RegisterPageProps) {
+  return (
+    <Register
+      onRegister={onRegister}
+      onBackToLogin={onBackToLogin}
+    />
+  );
 }

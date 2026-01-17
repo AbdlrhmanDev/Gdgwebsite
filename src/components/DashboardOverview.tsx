@@ -2,12 +2,173 @@ import { Users, Calendar, Award, TrendingUp, ArrowUp, ArrowDown, Clock, CheckCir
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Progress } from "./ui/progress";
 import { Badge } from "./ui/badge";
+import { useState, useEffect } from "react";
+import { userService } from "../services/userService";
+import { eventService } from "../services/eventService";
 
 export function DashboardOverview() {
-  const stats = [
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalMembers: 0,
+    activeEvents: 0,
+    attendanceRate: 0,
+    certificatesIssued: 0
+  });
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [topMembers, setTopMembers] = useState<any[]>([]);
+  const [quickStats, setQuickStats] = useState({
+    finished: 0,
+    upcoming: 0,
+    cancelled: 0,
+    pending: 0
+  });
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      // Load users count
+      const usersResponse = await userService.getUsers();
+      // Load events
+      const eventsResponse = await eventService.getEvents();
+      // Load leaderboard
+      const leaderboardResponse = await userService.getLeaderboard(5);
+      
+      if (usersResponse.success && eventsResponse.success && leaderboardResponse.success) {
+        const users = usersResponse.data;
+        const events = eventsResponse.data;
+        const leaderboard = leaderboardResponse.data;
+        
+        // Calculate stats
+        const activeEvents = events.filter((e: any) => e.status === 'active' || e.status === 'التسجيل مفتوح').length;
+        const upcomingEvts = events.filter((e: any) => new Date(e.date) > new Date()).slice(0, 3);
+        
+        const totalRegistrations = events.reduce((acc: number, event: any) => acc + (event.registrations?.length || 0), 0);
+        const totalAttended = events.reduce((acc: number, event: any) => acc + (event.registrations?.filter((r: any) => r.attended).length || 0), 0);
+        const attendanceRate = totalRegistrations > 0 ? (totalAttended / totalRegistrations) * 100 : 0;
+
+        setStats({
+          totalMembers: users.length,
+          activeEvents: activeEvents,
+          attendanceRate: Math.round(attendanceRate),
+          certificatesIssued: 342 // This should come from certificates issued
+        });
+
+        setTopMembers(leaderboard.map((u: any) => ({
+          name: u.user.name,
+          points: u.points,
+          events: u.user.eventsAttended?.length || 0,
+          rank: u.rank
+        })));
+        
+                setUpcomingEvents(upcomingEvts.map((e: any) => ({
+        
+                  title: e.title,
+        
+                  date: new Date(e.date).toLocaleDateString('ar-SA'),
+        
+                  registrations: e.attendees || 0,
+        
+                  capacity: e.capacity,
+        
+                  status: e.attendees >= e.capacity ? 'full' : 'open'
+        
+                })));
+        
+        
+        
+                setQuickStats({
+        
+                  finished: events.filter((e: any) => e.status === 'finished').length,
+        
+                  upcoming: events.filter((e: any) => new Date(e.date) > new Date()).length,
+        
+                  cancelled: events.filter((e: any) => e.status === 'cancelled').length,
+        
+                  pending: events.filter((e: any) => e.status === 'pending').length
+        
+                });
+        
+                
+        
+                // Set recent activities
+        
+                const sortedEvents = events.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+                const sortedUsers = users.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+                
+        
+                const newActivities: any[] = [];
+        
+                if(sortedEvents.length > 0) {
+        
+                  newActivities.push({
+        
+                    type: "event",
+        
+                    title: `تم إنشاء فعالية جديدة: ${sortedEvents[0].title}`,
+        
+                    time: "منذ 5 دقائق", // This should be calculated dynamically
+        
+                    icon: Calendar,
+        
+                    color: "#4285f4"
+        
+                  });
+        
+                }
+        
+                if(sortedUsers.length > 0) {
+        
+                  newActivities.push({
+        
+                    type: "member",
+        
+                    title: `انضم ${sortedUsers.length > 1 ? `${sortedUsers.slice(0, 5).length} أعضاء جدد` : 'عضو جديد'} إلى المجتمع`,
+        
+                    time: "منذ ساعة", // This should be calculated dynamically
+        
+                    icon: Users,
+        
+                    color: "#34a853"
+        
+                  });
+        
+                }
+        
+                setRecentActivities(newActivities);
+        
+              }
+        
+            } catch (error) {
+        
+              console.error('Failed to load dashboard data:', error);
+        
+            } finally {
+        
+              setLoading(false);
+        
+            }
+        
+          };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  const statsArray = [
     {
       title: "إجمالي الأعضاء",
-      value: "524",
+      value: stats.totalMembers.toString(),
       change: "+12.5%",
       trend: "up",
       icon: Users,
@@ -16,7 +177,7 @@ export function DashboardOverview() {
     },
     {
       title: "الفعاليات النشطة",
-      value: "8",
+      value: stats.activeEvents.toString(),
       change: "+2",
       trend: "up",
       icon: Calendar,
@@ -25,7 +186,7 @@ export function DashboardOverview() {
     },
     {
       title: "معدل الحضور",
-      value: "87%",
+      value: `${stats.attendanceRate}%`,
       change: "+5.2%",
       trend: "up",
       icon: TrendingUp,
@@ -34,7 +195,7 @@ export function DashboardOverview() {
     },
     {
       title: "الشهادات الممنوحة",
-      value: "342",
+      value: stats.certificatesIssued.toString(),
       change: "+28",
       trend: "up",
       icon: Award,
@@ -42,70 +203,6 @@ export function DashboardOverview() {
       subtitle: "هذا الفصل"
     }
   ];
-
-  const recentActivities = [
-    {
-      type: "event",
-      title: "تم إنشاء فعالية جديدة: ورشة React المتقدمة",
-      time: "منذ 5 دقائق",
-      icon: Calendar,
-      color: "#4285f4"
-    },
-    {
-      type: "member",
-      title: "انضم 15 عضو جديد إلى المجتمع",
-      time: "منذ ساعة",
-      icon: Users,
-      color: "#34a853"
-    },
-    {
-      type: "certificate",
-      title: "تم إصدار 12 شهادة جديدة",
-      time: "منذ ساعتين",
-      icon: Award,
-      color: "#f9ab00"
-    },
-    {
-      type: "event",
-      title: "تم تحديث معلومات فعالية الهاكاثون",
-      time: "منذ 3 ساعات",
-      icon: Calendar,
-      color: "#4285f4"
-    }
-  ];
-
-  const upcomingEvents = [
-    {
-      title: "ورشة تطوير Flutter",
-      date: "20 نوفمبر 2025",
-      registrations: 45,
-      capacity: 60,
-      status: "open"
-    },
-    {
-      title: "محاضرة الذكاء الاصطناعي",
-      date: "22 نوفمبر 2025",
-      registrations: 100,
-      capacity: 100,
-      status: "full"
-    },
-    {
-      title: "هاكاثون السحابة",
-      date: "25 نوفمبر 2025",
-      registrations: 150,
-      capacity: 200,
-      status: "open"
-    }
-  ];
-
-  const topMembers = [
-    { name: "أحمد محمد", points: 2450, events: 24, rank: 1 },
-    { name: "فاطمة علي", points: 2280, events: 22, rank: 2 },
-    { name: "خالد عبدالله", points: 2100, events: 20, rank: 3 },
-    { name: "مريم حسن", points: 1950, events: 18, rank: 4 },
-    { name: "عمر سعيد", points: 1820, events: 17, rank: 5 }
-  ];
-
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -116,7 +213,7 @@ export function DashboardOverview() {
 
       {/* Stats Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
+        {statsArray.map((stat, index) => {
           const Icon = stat.icon;
           const isPositive = stat.trend === "up";
           
@@ -266,28 +363,28 @@ export function DashboardOverview() {
                   <CheckCircle className="w-5 h-5 text-[#34a853]" />
                   <span className="text-sm font-medium">فعاليات منتهية</span>
                 </div>
-                <span className="text-lg font-bold">24</span>
+                <span className="text-lg font-bold">{quickStats.finished}</span>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <Clock className="w-5 h-5 text-[#f9ab00]" />
                   <span className="text-sm font-medium">فعاليات قادمة</span>
                 </div>
-                <span className="text-lg font-bold">8</span>
+                <span className="text-lg font-bold">{quickStats.upcoming}</span>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <XCircle className="w-5 h-5 text-[#ea4335]" />
                   <span className="text-sm font-medium">فعاليات ملغاة</span>
                 </div>
-                <span className="text-lg font-bold">2</span>
+                <span className="text-lg font-bold">{quickStats.cancelled}</span>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <AlertCircle className="w-5 h-5 text-[#4285f4]" />
                   <span className="text-sm font-medium">انتظار الموافقة</span>
                 </div>
-                <span className="text-lg font-bold">5</span>
+                <span className="text-lg font-bold">{quickStats.pending}</span>
               </div>
             </div>
           </CardContent>

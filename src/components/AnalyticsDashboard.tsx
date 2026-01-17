@@ -2,72 +2,101 @@ import { Users, Calendar, TrendingUp, Award, ArrowUp, ArrowDown, BarChart2, PieC
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { motion } from "motion/react";
+import { useState, useEffect } from "react";
+import { userService } from "../services/userService";
+import { eventService } from "../services/eventService";
 
 export function AnalyticsDashboard() {
-  // Sample data for charts
-  const memberGrowthData = [
-    { month: 'يناير', members: 120 },
-    { month: 'فبراير', members: 180 },
-    { month: 'مارس', members: 250 },
-    { month: 'أبريل', members: 320 },
-    { month: 'مايو', members: 410 },
-    { month: 'يونيو', members: 500 }
-  ];
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any[]>([]);
+  const [memberGrowthData, setMemberGrowthData] = useState<any[]>([]);
+  const [eventAttendanceData, setEventAttendanceData] = useState<any[]>([]);
+  const [weeklyActivityData, setWeeklyActivityData] = useState<any[]>([]);
+  const [topEvents, setTopEvents] = useState<any[]>([]);
 
-  const eventAttendanceData = [
-    { name: 'ورش البرمجة', value: 35 },
-    { name: 'الذكاء الاصطناعي', value: 25 },
-    { name: 'الأمن السيبراني', value: 20 },
-    { name: 'تطوير الويب', value: 15 },
-    { name: 'أخرى', value: 5 }
-  ];
+  useEffect(() => {
+    loadAnalyticsData();
+  }, []);
 
-  const weeklyActivityData = [
-    { day: 'السبت', events: 2, registrations: 45 },
-    { day: 'الأحد', events: 3, registrations: 67 },
-    { day: 'الاثنين', events: 1, registrations: 28 },
-    { day: 'الثلاثاء', events: 4, registrations: 89 },
-    { day: 'الأربعاء', events: 2, registrations: 56 },
-    { day: 'الخميس', events: 3, registrations: 72 },
-    { day: 'الجمعة', events: 1, registrations: 34 }
-  ];
+  const loadAnalyticsData = async () => {
+    try {
+      setLoading(true);
+      const usersResponse = await userService.getUsers();
+      const eventsResponse = await eventService.getEvents();
+
+      if (usersResponse.success && eventsResponse.success) {
+        const users = usersResponse.data;
+        const events = eventsResponse.data;
+
+        // Member Growth
+        const growthData = users.reduce((acc: any, user: any) => {
+          const month = new Date(user.createdAt).toLocaleString('default', { month: 'long' });
+          const year = new Date(user.createdAt).getFullYear();
+          const key = `${year}-${month}`;
+          if (!acc[key]) {
+            acc[key] = { month, members: 0 };
+          }
+          acc[key].members++;
+          return acc;
+        }, {});
+        setMemberGrowthData(Object.values(growthData));
+
+        // Event Categories
+        const categoryData = events.reduce((acc: any, event: any) => {
+          const category = event.category;
+          if (!acc[category]) {
+            acc[category] = { name: category, value: 0 };
+          }
+          acc[category].value++;
+          return acc;
+        }, {});
+        setEventAttendanceData(Object.values(categoryData));
+
+        // Weekly Activity
+        const weeklyData = events.reduce((acc: any, event: any) => {
+          const day = new Date(event.date).toLocaleString('default', { weekday: 'long' });
+          if (!acc[day]) {
+            acc[day] = { day, events: 0, registrations: 0 };
+          }
+          acc[day].events++;
+          acc[day].registrations += event.attendees || 0;
+          return acc;
+        }, {});
+        setWeeklyActivityData(Object.values(weeklyData));
+
+        // Top Events
+        const sortedEvents = events.sort((a: any, b: any) => (b.attendees || 0) - (a.attendees || 0)).slice(0, 4);
+        setTopEvents(sortedEvents.map((event: any) => ({
+          name: event.title,
+          date: new Date(event.date).toLocaleDateString('ar-SA'),
+          registered: event.registrations?.length || 0,
+          attended: event.attendees || 0,
+          rate: (event.attendees || 0) / (event.registrations?.length || 1) * 100
+        })));
+        
+        // Stats
+        const totalMembers = users.length;
+        const eventsThisMonth = events.filter((e:any) => new Date(e.date).getMonth() === new Date().getMonth()).length;
+        const totalRegistrations = events.reduce((acc: number, event: any) => acc + (event.registrations?.length || 0), 0);
+        const totalAttended = events.reduce((acc: number, event: any) => acc + (event.registrations?.filter((r: any) => r.attended).length || 0), 0);
+        const attendanceRate = totalRegistrations > 0 ? (totalAttended / totalRegistrations) * 100 : 0;
+        
+        setStats([
+          { title: 'إجمالي الأعضاء', value: totalMembers, change: '+12%', trend: 'up', icon: Users, color: '#4285f4' },
+          { title: 'الفعاليات هذا الشهر', value: eventsThisMonth, change: '+3', trend: 'up', icon: Calendar, color: '#34a853' },
+          { title: 'معدل الحضور', value: `${Math.round(attendanceRate)}%`, change: '+5%', trend: 'up', icon: TrendingUp, color: '#f9ab00' },
+          { title: 'الشهادات الممنوحة', value: 342, change: '+28', trend: 'up', icon: Award, color: '#ea4335' }
+        ]);
+      }
+    } catch (error) {
+      console.error("Failed to load analytics data", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const COLORS = ['#4285f4', '#34a853', '#f9ab00', '#ea4335', '#9e9e9e'];
 
-  const stats = [
-    {
-      title: 'إجمالي الأعضاء',
-      value: '500+',
-      change: '+12%',
-      trend: 'up',
-      icon: Users,
-      color: '#4285f4'
-    },
-    {
-      title: 'الفعاليات هذا الشهر',
-      value: '8',
-      change: '+3',
-      trend: 'up',
-      icon: Calendar,
-      color: '#34a853'
-    },
-    {
-      title: 'معدل الحضور',
-      value: '85%',
-      change: '+5%',
-      trend: 'up',
-      icon: TrendingUp,
-      color: '#f9ab00'
-    },
-    {
-      title: 'الشهادات الممنوحة',
-      value: '342',
-      change: '+28',
-      trend: 'up',
-      icon: Award,
-      color: '#ea4335'
-    }
-  ];
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -299,12 +328,7 @@ export function AnalyticsDashboard() {
                     </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                    {[
-                        { name: 'ورشة تطوير Android', date: '15 نوفمبر 2025', registered: 120, attended: 105, rate: 87.5 },
-                        { name: 'دورة الحوسبة السحابية', date: '22 نوفمبر 2025', registered: 80, attended: 72, rate: 90 },
-                        { name: 'هاكاثون تطوير الويب', date: '5 ديسمبر 2025', registered: 200, attended: 180, rate: 90 },
-                        { name: 'محاضرة الذكاء الاصطناعي', date: '12 ديسمبر 2025', registered: 150, attended: 125, rate: 83.3 }
-                    ].map((event, index) => (
+                    {topEvents.map((event, index) => (
                         <tr key={index} className="hover:bg-muted/20 transition-colors">
                         <td className="py-4 px-6 text-sm font-medium">{event.name}</td>
                         <td className="py-4 px-6 text-sm text-muted-foreground">{event.date}</td>

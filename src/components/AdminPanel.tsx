@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Calendar, MapPin, Users, X, Search, Filter, MoreVertical } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, MapPin, Users, X, Search, Filter, MoreVertical, Eye } from "lucide-react";
+import { EventRegistrationsPanel } from "./EventRegistrationsPanel";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
@@ -19,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Label } from "./ui/label";
+import { Switch } from "./ui/switch";
 import { RegistrationMethodSelector } from "./RegistrationMethodSelector";
 import { RegistrationConfig, internalRegistration } from "../lib/registration-methods";
 import { Event } from "../lib/storage";
@@ -29,13 +31,22 @@ interface AdminPanelProps {
   onAddEvent: (event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => void;
   onEditEvent: (id: string, event: Omit<Event, 'id' | 'createdAt' | 'createdBy' | 'attendees'>) => void;
   onDeleteEvent: (id: string) => void;
+  onCancelRegistration: (eventId: string) => void;
+  onRegisterForEvent: (eventId: string) => void; // New prop for registering
   isAdmin: boolean;
+  userRole: 'admin' | 'leader' | 'member' | 'user';
+  currentUserId: string;
+  userRegistrations: string[];
 }
 
-export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isAdmin }: AdminPanelProps) {
+export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, onCancelRegistration, onRegisterForEvent, isAdmin, userRole, currentUserId, userRegistrations }: AdminPanelProps) {
+  console.log("AdminPanel (Debug) - userRole:", userRole);
+  console.log("AdminPanel (Debug) - currentUserId:", currentUserId);
+  console.log("AdminPanel (Debug) - userRegistrations:", userRegistrations);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewingRegistrations, setViewingRegistrations] = useState<Event | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     date: "",
@@ -43,15 +54,18 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     location: "",
     capacity: "50",
     image: "",
-    status: "قريباً",
+    status: "upcoming",
     color: "#4285f4",
     description: "",
     tags: [] as string[],
     isOnline: false,
     meetingLink: "",
     requirements: "",
-    registrationMethod: internalRegistration as RegistrationConfig
+    registrationMethod: internalRegistration as RegistrationConfig,
+    isPublic: true,
   });
+
+  const canAddEvents = isAdmin || userRole === 'admin' || userRole === 'leader';
 
   const colors = [
     { value: "#4285f4", label: "أزرق" },
@@ -67,10 +81,15 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canAddEvents) {
+      return;
+    }
     
     const eventData = {
       ...formData,
-      capacity: parseInt(formData.capacity) || 0
+      capacity: parseInt(formData.capacity) || 0,
+      date: new Date(formData.date).toISOString(),
+      registrationMethod: formData.registrationMethod.method
     };
 
     if (editingEvent) {
@@ -87,19 +106,20 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
     setEditingEvent(event);
     setFormData({
       title: event.title,
-      date: event.date,
+      date: event.date ? new Date(event.date).toISOString().split('T')[0] : '',
       time: event.time,
       location: event.location,
       capacity: event.capacity.toString(),
       image: event.image,
-      status: event.status,
+      status: event.status || 'upcoming',
       color: event.color,
       description: event.description || "",
       tags: event.tags || [] as string[],
       isOnline: event.isOnline || false,
       meetingLink: event.meetingLink || "",
       requirements: event.requirements || "",
-      registrationMethod: event.registrationMethod || internalRegistration as RegistrationConfig
+      registrationMethod: event.registrationMethod || internalRegistration as RegistrationConfig,
+      isPublic: event.isPublic !== false,
     });
     setIsDialogOpen(true);
   };
@@ -118,16 +138,28 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
       location: "",
       capacity: "50",
       image: "",
-      status: "قريباً",
+      status: "upcoming",
       color: "#4285f4",
       description: "",
       tags: [] as string[],
       isOnline: false,
       meetingLink: "",
       requirements: "",
-      registrationMethod: internalRegistration as RegistrationConfig
+      registrationMethod: internalRegistration as RegistrationConfig,
+      isPublic: true,
     });
     setEditingEvent(null);
+  };
+
+  const getTitle = () => {
+    if (isAdmin) return "المدير";
+    if (userRole === 'leader') return "القائد";
+    return "العضو";
+  };
+
+  const handleEventClick = (event: Event) => {
+    // Optional: Add any event click logic here if needed
+    console.log("Event clicked:", event.id);
   };
 
   return (
@@ -136,30 +168,31 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
-            لوحة {isAdmin ? "المدير" : "العضو"}
+            لوحة {getTitle()}
           </h2>
           <p className="text-muted-foreground mt-1">إدارة وتنظيم فعاليات مجتمع GDG</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#4285f4] hover:bg-[#3367d6] shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
-              <Plus className="w-4 h-4 ml-2" />
-              إضافة فعالية
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
-            <DialogHeader>
-              <DialogTitle>{editingEvent ? "تعديل الفعالية" : "إضافة فعالية جديدة"}</DialogTitle>
-              <DialogDescription>
-                قم بتعبئة البيانات أدناه {editingEvent ? "لتحديث" : "لإنشاء"} الفعالية
-              </DialogDescription>
-            </DialogHeader>
-            
-            <form onSubmit={handleSubmit} className="space-y-6 py-4">
+        {canAddEvents ? (
+        <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => {
+            setIsDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#4285f4] hover:bg-[#3367d6] shadow-lg shadow-blue-500/20 transition-all hover:scale-105">
+                <Plus className="w-4 h-4 ml-2" />
+                إضافة فعالية
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
+              <DialogHeader>
+                <DialogTitle>{editingEvent ? "تعديل الفعالية" : "إضافة فعالية جديدة"}</DialogTitle>
+                <DialogDescription>
+                  قم بتعبئة البيانات أدناه {editingEvent ? "لتحديث" : "لإنشاء"} الفعالية
+                </DialogDescription>
+              </DialogHeader>
+              
+              <form onSubmit={handleSubmit} className="space-y-6 py-4">
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="title">عنوان الفعالية</Label>
@@ -178,10 +211,10 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                     <Label htmlFor="date">التاريخ</Label>
                     <Input
                       id="date"
-                      type="text"
+                      type="date"
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      placeholder="25 نوفمبر 2025"
+                      placeholder="2025-11-25"
                       required
                       className="bg-muted/50"
                     />
@@ -258,10 +291,10 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                       className="w-full px-3 py-2 bg-muted/50 border border-input rounded-md text-sm"
                       required
                     >
-                      <option value="قريباً">قريباً</option>
-                      <option value="التسجيل مفتوح">التسجيل مفتوح</option>
-                      <option value="اكتمل العدد">اكتمل العدد</option>
-                      <option value="انتهت">انتهت</option>
+                      <option value="upcoming">قريباً</option>
+                      <option value="ongoing">التسجيل مفتوح</option>
+                      <option value="completed">اكتمل العدد</option>
+                      <option value="cancelled">انتهت</option>
                     </select>
                   </div>
                   <div>
@@ -280,6 +313,18 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                       ))}
                     </select>
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-2xl">
+                  <div>
+                    <Label htmlFor="isPublic" className="text-sm font-medium">عرض الفعالية للزوار</Label>
+                    <p className="text-xs text-muted-foreground mt-1">إخفِ أو أظهر الفعالية في الموقع العام ولوحة المستخدم.</p>
+                  </div>
+                  <Switch
+                    id="isPublic"
+                    checked={formData.isPublic}
+                    onCheckedChange={(checked: boolean) => setFormData({ ...formData, isPublic: checked })}
+                  />
                 </div>
 
                 {/* Registration Method */}
@@ -309,9 +354,14 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                   {editingEvent ? "تحديث الفعالية" : "إضافة الفعالية"}
                 </Button>
               </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </form>
+            </DialogContent>
+          </Dialog>
+        ) : (
+          <div className="text-sm text-muted-foreground border border-dashed border-border rounded-xl px-4 py-2">
+            لا يمكن لصلاحية العضو إضافة فعاليات جديدة.
+          </div>
+        )}
       </div>
 
       {/* Search and Filter Bar */}
@@ -347,12 +397,16 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
           filteredEvents.map((event, index) => (
             <motion.div
               key={event.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ delay: index * 0.05 }}
-              className="group bg-card border border-border/50 rounded-2xl p-4 hover:shadow-lg hover:border-border transition-all duration-300"
+              id={`event-${event.id}`} // Add this line
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className="group bg-card border border-border rounded-[32px] overflow-hidden hover:shadow-xl hover:shadow-black/5 dark:hover:shadow-black/50 transition-all duration-500 flex flex-col h-full hover:-translate-y-2"
+              onClick={() => handleEventClick(event)}
             >
+              {console.log("AdminPanel (Debug) - event.id:", event.id)}
+              {console.log("AdminPanel (Debug) - isRegistered:", userRegistrations.includes(event.id))}
               <div className="flex flex-col sm:flex-row gap-5">
                 <div className="relative w-full sm:w-32 h-32 rounded-xl overflow-hidden flex-shrink-0">
                     <img
@@ -371,12 +425,17 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                         <Badge style={{ backgroundColor: event.color }} className="shadow-sm">
                           {event.status}
                         </Badge>
+                        {event.isPublic === false && (
+                          <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/50">
+                            غير مرئي للعامة
+                          </Badge>
+                        )}
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-primary" />
-                          <span>{event.date} • {event.time}</span>
+                          <span>{new Date(event.date).toLocaleDateString()} • {event.time}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-primary" />
@@ -390,25 +449,68 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2">
-                       <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                             <DropdownMenuItem onClick={() => handleEdit(event)}>
-                                <Edit className="w-4 h-4 ml-2" />
-                                تعديل
-                             </DropdownMenuItem>
-                             {isAdmin && (
-                                <DropdownMenuItem onClick={() => handleDelete(event.id)} className="text-red-500 focus:text-red-500">
-                                    <Trash2 className="w-4 h-4 ml-2" />
-                                    حذف
-                                </DropdownMenuItem>
-                             )}
-                          </DropdownMenuContent>
-                       </DropdownMenu>
+                       {userRole === 'member' ? (
+                           userRegistrations.includes(event.id) ? (
+                               // Member is registered: show "Registered" button which cancels registration
+                               <Button
+                                   variant="secondary"
+                                   onClick={(e) => {
+                                       e.stopPropagation();
+                                       onCancelRegistration(event.id);
+                                   }}
+                                   className="flex items-center gap-1"
+                               >
+                                   <X className="w-4 h-4" />
+                                   مسجل
+                               </Button>
+                           ) : (
+                               // Member is not registered: show "Register" button
+                               <Button
+                                   onClick={(e) => {
+                                       e.stopPropagation();
+                                       onRegisterForEvent(event.id);
+                                   }}
+                                   className="flex items-center gap-1 bg-[#4285f4] hover:bg-[#3367d6] shadow-lg shadow-blue-500/20 transition-all hover:scale-105"
+                               >
+                                   <Plus className="w-4 h-4" />
+                                   سجل الآن
+                               </Button>
+                           )
+                       ) : (
+                           // Admin or Leader: show existing dropdown menu
+                           <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                 {(isAdmin || userRole === 'leader') && (
+                                    <DropdownMenuItem onClick={() => setViewingRegistrations(event)}>
+                                       <Eye className="w-4 h-4 ml-2" />
+                                       عرض التسجيلات
+                                    </DropdownMenuItem>
+                                 )}
+                                 {(isAdmin || userRole === 'leader') && (
+                                    <DropdownMenuItem onClick={() => handleEdit(event)}>
+                                        <Edit className="w-4 h-4 ml-2" />
+                                        تعديل
+                                    </DropdownMenuItem>
+                                 )}
+                                 {(isAdmin || userRole === 'leader') && (
+                                    <DropdownMenuItem onClick={() => handleDelete(event.id)} className="text-red-500 focus:text-red-500">
+                                        <Trash2 className="w-4 h-4 ml-2" />
+                                        حذف
+                                    </DropdownMenuItem>
+                                 )}
+                              </DropdownMenuContent>
+                           </DropdownMenu>
+                       )}
                     </div>
                   </div>
                 </div>
@@ -418,6 +520,19 @@ export function AdminPanel({ events, onAddEvent, onEditEvent, onDeleteEvent, isA
         )}
         </AnimatePresence>
       </div>
+
+      {/* Registrations Modal */}
+      {viewingRegistrations && (
+        <Dialog open={!!viewingRegistrations} onOpenChange={() => setViewingRegistrations(null)}>
+          <DialogContent className="!max-w-[95vw] w-[95vw] max-h-[95vh] overflow-y-auto">
+            <EventRegistrationsPanel
+              eventId={viewingRegistrations.id}
+              eventTitle={viewingRegistrations.title}
+              onClose={() => setViewingRegistrations(null)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

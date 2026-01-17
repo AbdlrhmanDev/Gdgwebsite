@@ -1,17 +1,17 @@
-"use client";
+import { Login } from "../../components/Login";
 
-import { Login } from "@/components/Login";
-import { useGlobal } from "@/contexts/GlobalContext";
-import { useRouter } from "next/navigation";
+interface LoginPageProps {
+  onLogin: (email: string, password: string) => void;
+  onRegister: () => void;
+  onForgotPassword: () => void;
+}
 
-export default function LoginPage() {
-    const { login } = useGlobal();
-    const router = useRouter();
-
-    return (
-        <Login
-            onLogin={login}
-            onRegister={() => router.push('/register')}
-        />
-    );
+export default function LoginPage({ onLogin, onRegister, onForgotPassword }: LoginPageProps) {
+  return (
+    <Login
+      onLogin={onLogin}
+      onRegister={onRegister}
+      onForgotPassword={onForgotPassword}
+    />
+  );
 }

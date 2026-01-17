@@ -1,86 +1,96 @@
-"use client";
+import { Navigation } from "../components/Navigation";
+import { Hero } from "../components/Hero";
+import { WinnerShowcase } from "../components/WinnerShowcase";
+import { About } from '../components/About';
+import { Events } from '../components/Events';
+import { Team } from '../components/Team';
+import { Leaderboard } from '../components/Leaderboard';
+import { Contact } from '../components/Contact';
+import { Footer } from "../components/Footer";
+import { type Language } from "../lib/i18n";
+import { type Event } from "../lib/storage";
+import { useEffect } from "react"; // Import useEffect
 
-import { Navigation } from "@/components/Navigation";
-import { Hero } from "@/components/Hero";
-import { About } from "@/components/About";
-import { Events } from "@/components/Events";
-import { Team } from "@/components/Team";
-import { Contact } from "@/components/Contact";
-import { Footer } from "@/components/Footer";
-import { useGlobal } from "@/contexts/GlobalContext";
-import { useTheme } from "next-themes";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+interface HomePageProps {
+  currentLang: Language;
+  isDarkMode: boolean;
+  events: Event[];
+  onLanguageToggle: () => void;
+  onLoginClick: () => void;
+  onRefreshEvents: () => void;
+  userEmail?: string;
+  userRole?: 'admin' | 'member' | 'user' | 'leader';
+  isLoggedIn?: boolean;
+  highlightEventId?: string | null; // New prop
+  onClearHighlightEventId?: () => void; // New prop
+}
 
-export default function HomePage() {
-  const {
-    currentLang,
-    toggleLanguage,
-    events,
-    refreshEvents,
-    userEmail,
-    userRole,
-    isLoggedIn
-  } = useGlobal();
+export default function HomePage({
+  currentLang,
+  isDarkMode,
+  events,
+  onLanguageToggle,
+  onLoginClick,
+  onRefreshEvents,
+  userEmail,
+  userRole,
+  isLoggedIn,
+  highlightEventId, // New prop
+  onClearHighlightEventId // New prop
+}: HomePageProps) {
+  const t = (key: string) => {
+    // Helper for translation if needed in this file,
+    // but components handle their own translation
+    return "";
+  };
+  const publicEvents = events.filter((event) => event.isPublic !== false);
 
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-
+  // Effect to scroll to the highlighted event
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  const isDarkMode = resolvedTheme === 'dark';
-
-  const toggleDarkMode = () => {
-    setTheme(isDarkMode ? 'light' : 'dark');
-  };
-
-  const handleLoginClick = () => {
-    if (isLoggedIn) {
-      router.push('/dashboard');
-    } else {
-      router.push('/login');
+    if (highlightEventId) {
+      const eventElement = document.getElementById(`event-${highlightEventId}`);
+      if (eventElement) {
+        eventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Optionally clear the highlight ID after scrolling
+        if (onClearHighlightEventId) {
+          onClearHighlightEventId();
+        }
+      }
     }
-  };
+  }, [highlightEventId, onClearHighlightEventId]);
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
-      <Navigation
-        currentLang={currentLang}
-        onLanguageToggle={toggleLanguage}
-        isDarkMode={isDarkMode}
-        onDarkModeToggle={toggleDarkMode}
-      />
-
-      {/* Login button overlay for quick access */}
-      <div className={`fixed ${currentLang === 'ar' ? 'left-4' : 'right-4'} top-20 z-40`}>
-        <button
-          onClick={handleLoginClick}
-          className="px-4 py-2 bg-[#4285f4] text-white rounded-lg hover:bg-[#3367d6] shadow-lg transition-colors cursor-pointer"
-        >
-          {currentLang === 'ar' ? 'دخول اللوحة' : 'Panel Login'}
-        </button>
-      </div>
+    <div className={`min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-white'}`}>      <Navigation
+      currentLang={currentLang}
+      onLanguageToggle={onLanguageToggle}
+      isDarkMode={isDarkMode}
+    />
 
       <main>
         <section id="home">
-          <Hero lang={currentLang} />
+          <Hero
+            lang={currentLang}
+            onLoginClick={onLoginClick}
+            isLoggedIn={isLoggedIn || false}
+          />
+        </section>
+        <section id="winner">
+          <WinnerShowcase lang={currentLang} />
         </section>
         <section id="about">
           <About lang={currentLang} />
         </section>
+        <section id="leaderboard">
+          <Leaderboard lang={currentLang} />
+        </section>
         <section id="events">
           <Events
-            events={events}
+            events={publicEvents}
             lang={currentLang}
             userEmail={userEmail}
             userRole={userRole}
             isLoggedIn={isLoggedIn}
-            onRefresh={refreshEvents}
+            onRefresh={onRefreshEvents}
           />
         </section>
         <section id="team">

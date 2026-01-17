@@ -1,13 +1,12 @@
 import { Code, Users, Lightbulb, Rocket } from "lucide-react";
 import { motion } from "motion/react";
-import { getTranslation, type Language } from "../lib/i18n";
+import { type Language } from "../lib/i18n";
 
 interface AboutProps {
   lang: Language;
 }
 
 export function About({ lang }: AboutProps) {
-  const t = (key: string) => getTranslation(lang, key);
 
   const features = [
     {
@@ -52,18 +51,21 @@ export function About({ lang }: AboutProps) {
 
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-20 space-y-4">
-          <motion.h2 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-4xl md:text-5xl font-bold tracking-tight"
+            className={`text-4xl md:text-5xl font-bold tracking-tight ${lang === 'ar' ? 'leading-[1.4] pb-1' : ''}`}
           >
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+            <span
+              className="bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 block"
+              style={lang === 'ar' ? { lineHeight: '1.5', paddingTop: '0.5rem', paddingBottom: '0.5rem' } : undefined}
+            >
               {lang === 'ar' ? 'عن GDG في الحرم الجامعي' : 'About GDG on Campus'}
             </span>
-          </motion.h2>
+          </motion.h1>
           <motion.p 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}

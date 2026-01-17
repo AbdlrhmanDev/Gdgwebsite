@@ -1,0 +1,36 @@
+const express = require('express');
+const router = express.Router();
+const {
+  createUser,
+  getUsers,
+  getUser,
+  updateUser,
+  deleteUser,
+  addPoints,
+  setPoints,
+  awardBadge,
+  getLeaderboard,
+  getUserRank
+} = require('../controllers/userController');
+const { protect, authorize } = require('../middleware/auth');
+
+router.get('/leaderboard', getLeaderboard);
+router.get('/:id/rank', getUserRank);
+
+// Public route for getting team members (filtered in frontend)
+router.get('/public/team', getUsers);
+
+router.route('/')
+  .get(getUsers)
+  .post(protect, authorize('admin'), createUser);
+
+router.route('/:id')
+  .get(protect, getUser)
+  .put(protect, updateUser)
+  .delete(protect, authorize('admin'), deleteUser);
+
+router.post('/:id/points', protect, authorize('admin', 'leader'), addPoints);
+router.put('/:id/points', protect, authorize('admin', 'leader'), setPoints);
+router.post('/:id/badges', protect, authorize('admin', 'leader'), awardBadge);
+
+module.exports = router;

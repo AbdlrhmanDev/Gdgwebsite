@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Moon, Sun, Globe } from "lucide-react";
+import { Menu, X, Globe } from "lucide-react";
 import { Button } from "./ui/button";
 import { getTranslation, type Language } from "../lib/i18n";
 import { motion, AnimatePresence } from "motion/react";
@@ -8,10 +8,9 @@ interface NavigationProps {
   currentLang: Language;
   onLanguageToggle: () => void;
   isDarkMode: boolean;
-  onDarkModeToggle: () => void;
 }
 
-export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkModeToggle }: NavigationProps) {
+export function Navigation({ currentLang, onLanguageToggle, isDarkMode }: NavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   
@@ -30,8 +29,44 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkMo
     { name: t('nav.about'), href: "#about" },
     { name: t('nav.events'), href: "#events" },
     { name: t('nav.team'), href: "#team" },
+    { name: currentLang === 'ar' ? 'المتصدرين' : 'Leaderboard', href: "#leaderboard" },
     { name: t('nav.contact'), href: "#contact" }
   ];
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const wasMenuOpen = isOpen;
+    setIsOpen(false); // Close mobile menu if open
+    
+    const targetId = href.substring(1); // Remove '#'
+    
+    // If mobile menu was open, wait for it to close before scrolling
+    const scrollToTarget = () => {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const targetElement = document.getElementById(targetId);
+          if (targetElement) {
+            const navbarHeight = 64; // Height of fixed navbar (h-16 = 4rem = 64px)
+            const elementPosition = targetElement.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - navbarHeight;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+    };
+
+    if (wasMenuOpen) {
+      // Small delay to allow menu animation to start
+      setTimeout(scrollToTarget, 150);
+    } else {
+      scrollToTarget();
+    }
+  };
 
   return (
     <motion.nav 
@@ -68,7 +103,8 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkMo
               <a
                 key={item.name}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative group"
+                onClick={(e) => handleNavClick(e, item.href)}
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative group cursor-pointer"
               >
                 {item.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#4285f4] group-hover:w-full transition-all duration-300"></span>
@@ -78,22 +114,11 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkMo
             <div className="h-6 w-px bg-border mx-2" />
 
             <button
-              onClick={onDarkModeToggle}
-              className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-            >
-              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-
-            <button
               onClick={onLanguageToggle}
               className="p-2 rounded-full hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
             >
               <Globe className="w-5 h-5" />
             </button>
-
-            <Button className="bg-[#4285f4] hover:bg-[#3367d6] text-white rounded-full px-6 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all hover:scale-105">
-              {t('nav.joinUs')}
-            </Button>
           </div>
 
           {/* Mobile menu button */}
@@ -122,24 +147,16 @@ export function Navigation({ currentLang, onLanguageToggle, isDarkMode, onDarkMo
                 <a
                   key={item.name}
                   href={item.href}
-                  className="block text-lg font-medium text-foreground hover:text-[#4285f4] transition-colors"
-                  onClick={() => setIsOpen(false)}
+                  onClick={(e) => handleNavClick(e, item.href)}
+                  className="block text-lg font-medium text-foreground hover:text-[#4285f4] transition-colors cursor-pointer"
                 >
                   {item.name}
                 </a>
               ))}
-              <div className="pt-4 flex items-center justify-between border-t border-border mt-4">
-                <div className="flex gap-4">
-                  <button onClick={onDarkModeToggle} className="p-2 hover:bg-muted rounded-full">
-                    {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                  </button>
-                  <button onClick={onLanguageToggle} className="p-2 hover:bg-muted rounded-full">
-                    <Globe className="w-5 h-5" />
-                  </button>
-                </div>
-                <Button className="bg-[#4285f4] hover:bg-[#3367d6] text-white rounded-full">
-                  {t('nav.joinUs')}
-                </Button>
+              <div className="pt-4 flex items-center justify-center border-t border-border mt-4">
+                <button onClick={onLanguageToggle} className="p-2 hover:bg-muted rounded-full">
+                  <Globe className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </motion.div>

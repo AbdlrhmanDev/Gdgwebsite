@@ -24,24 +24,22 @@ export function Footer({ lang }: FooterProps) {
                 <span className="w-2 h-2 rounded-full bg-[#f9ab00] animate-pulse delay-150"></span>
                 <span className="w-2 h-2 rounded-full bg-[#ea4335] animate-pulse delay-200"></span>
               </div>
-              <span className="text-xl font-bold tracking-tight">GDG Mustaqbal</span>
+              <span className="text-xl font-bold tracking-tight">
+                GDG Mustaqbal
+              </span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">
-              {lang === 'ar'
-                ? 'مجتمع طلابي مدعوم من مطوري Google، يربط ويمكّن الطلاب في جامعة المستقبل.'
-                : 'A student-led community powered by Google Developers, connecting and empowering students at Mustaqbal University.'}
+              {lang === "ar"
+                ? "مجتمع طلابي مدعوم من مطوري Google، يربط ويمكّن الطلاب في جامعة المستقبل."
+                : "A student-led community powered by Google Developers, connecting and empowering students at Mustaqbal University."}
             </p>
-            <div className="flex gap-4">
-                {/* Simple social icons placeholder */}
-                {[1,2,3].map(i => (
-                    <div key={i} className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 transition-colors cursor-pointer" />
-                ))}
-            </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-6 text-white">{lang === 'ar' ? 'روابط سريعة' : 'Quick Links'}</h3>
+            <h3 className="text-lg font-semibold mb-6 text-white">
+              {lang === "ar" ? "روابط سريعة" : "Quick Links"}
+            </h3>
             <ul className="space-y-3">
               {["Home", "About", "Events", "Team", "Contact"].map((item) => (
                 <li key={item}>
@@ -57,37 +55,24 @@ export function Footer({ lang }: FooterProps) {
           </div>
 
           {/* Resources */}
-          <div>
-            <h3 className="text-lg font-semibold mb-6 text-white">{lang === 'ar' ? 'المصادر' : 'Resources'}</h3>
-            <ul className="space-y-3">
-              {["Code of Conduct", "FAQs", "Blog", "Gallery", "Partners"].map((item) => (
-                <li key={item}>
-                  <a
-                    href="#"
-                    className="text-gray-400 hover:text-[#34a853] transition-colors text-sm block transform hover:translate-x-1 rtl:hover:-translate-x-1 duration-300"
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-lg font-semibold mb-6 text-white">{lang === 'ar' ? 'اتصل بنا' : 'Contact'}</h3>
+            <h3 className="text-lg font-semibold mb-6 text-white">
+              {lang === "ar" ? "اتصل بنا" : "Contact"}
+            </h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-sm text-gray-400 group">
                 <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#ea4335]/20 transition-colors">
-                    <Mail className="w-4 h-4 group-hover:text-[#ea4335] transition-colors" />
+                  <Mail className="w-4 h-4 group-hover:text-[#ea4335] transition-colors" />
                 </div>
-                <span className="mt-1.5">gdg@mustaqbal.edu</span>
+                <span className="mt-1.5">gdg.uom2025@gmail.com</span>
               </li>
               <li className="flex items-start gap-3 text-sm text-gray-400 group">
-                 <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#f9ab00]/20 transition-colors">
-                    <MapPin className="w-4 h-4 group-hover:text-[#f9ab00] transition-colors" />
+                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#f9ab00]/20 transition-colors">
+                  <MapPin className="w-4 h-4 group-hover:text-[#f9ab00] transition-colors" />
                 </div>
-                <span className="mt-1.5">Mustaqbal University, Student Center</span>
+                <span className="mt-1.5">Mustaqbal University</span>
               </li>
             </ul>
           </div>
@@ -96,19 +81,9 @@ export function Footer({ lang }: FooterProps) {
         {/* Bottom Bar */}
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-sm text-gray-500 flex items-center gap-1">
-            © 2025 GDG on Campus Mustaqbal University. Made with <Heart className="w-3 h-3 text-red-500 fill-red-500 animate-pulse" /> by Students.
+           by Some folks{" "}
+            <Heart className="w-3 h-3 text-red-500 fill-red-500 animate-pulse" />
           </p>
-          <div className="flex gap-8">
-            {["Privacy Policy", "Terms of Service"].map((item) => (
-              <a
-                key={item}
-                href="#"
-                className="text-sm text-gray-500 hover:text-white transition-colors"
-              >
-                {item}
-              </a>
-            ))}
-          </div>
         </div>
       </div>
     </footer>
